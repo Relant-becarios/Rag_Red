@@ -1,0 +1,83 @@
+:root {
+  /* ── Tema Claro (Por defecto) ── */
+  --fondo-principal: #ffffff;
+  --fondo-tarjeta: #f8f9fa;
+  --color-texto: #1a1a1a;
+  --color-acento: #ff0000;
+  --borde: #e5e7eb;
+}
+
+:root[data-theme='dark'],
+body.dark-mode,
+body.dark,
+body.oscuro {
+  /* ── Tema Oscuro ── */
+  --fondo-principal: #0f1215;
+  --fondo-tarjeta: #161b22;
+  --color-texto: #ffffff;
+  --color-acento: #ff0000;
+  --borde: #30363d;
+}
+
+body {
+  background: var(--fondo-principal);
+  color: var(--color-texto);
+  font-family: sans-serif;
+  margin: 0;
+  /* Efecto suave al cambiar de tema */
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
+}
+
+/* Aseguramos que los iconos SVG (como tu carrito y menú) hereden el color del texto */
+svg {
+  color: var(--color-texto);
+}
+
+.navbar {
+  display: flex;
+  padding: 20px;
+  background: var(--fondo-tarjeta);
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--borde);
+  /* Transición suave para la barra de navegación */
+  transition:
+    background-color 0.3s ease,
+    border-color 0.3s ease;
+}
+
+/* Refuerzo para que el texto "AI" y botones del navbar usen la variable */
+.navbar a,
+.navbar span,
+.navbar button,
+.navbar i {
+  color: var(--color-texto);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 20px;
+  padding: 20px;
+}
+
+.card {
+  background: var(--fondo-tarjeta);
+  border: 1px solid var(--borde);
+  padding: 15px;
+  border-radius: 8px;
+  text-align: center;
+  /* Transición suave para las tarjetas */
+  transition:
+    background-color 0.3s ease,
+    border-color 0.3s ease;
+}
+
+.card img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 4px;
+}

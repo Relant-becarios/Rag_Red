@@ -1,0 +1,36 @@
+fastapi>=0.110
+uvicorn[standard]>=0.29
+pydantic>=2.6
+pydantic-settings>=2.2
+langchain-core>=0.3
+langchain-openai>=0.2
+langchain-chroma>=0.1
+langchain-text-splitters>=0.3
+langgraph>=0.2
+rank_bm25>=0.2.2
+pymupdf>=1.24
+# Word: .docx se lee con la librería estándar; .doc (Word 97-2003) necesita olefile
+olefile>=0.46
+pillow>=10.0
+# tablas de Excel como fuente de datos (además de CSV): .xlsx/.xlsm con openpyxl, .xls con xlrd
+openpyxl>=3.1
+xlrd>=2.0
+# technical datasheets as PDF (app/pdfdatagen.py)
+xhtml2pdf>=0.2.11
+pandas>=2.0   # only for the standalone mode of pdfdatagen (generar_pdf from a CSV folder)
+python-dotenv>=1.0
+# application database (MySQL 8): users, roles, conversations, audit, embedding cache
+sqlalchemy>=2.0.30
+pymysql>=1.1
+cryptography>=42   # needed by PyMySQL for MySQL 8 caching_sha2_password logins
+python-multipart>=0.0.9   # file uploads to the knowledge bases
+# Relant App Production 1.0 (ver requirements-production-1.0.txt)
+snowballstemmer>=2.2      # analizador BM25: raíces en español e inglés
+numpy>=1.26               # caché semántica de respuestas
+# reranker local (RERANKER_BACKEND=local, por defecto). Opcional: sin él la búsqueda usa
+# el orden RRF. En servidor sólo CPU instalar antes torch CPU:
+#   pip install torch --index-url https://download.pytorch.org/whl/cpu
+sentence-transformers>=3.0
+# tests
+httpx>=0.27
+pytest>=8.0

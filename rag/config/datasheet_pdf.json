@@ -1,0 +1,12 @@
+{
+  "_comentario": "Copia este archivo como datasheet_pdf.json y declara RAG_DATASHEET_PDF_CONFIG=config/datasheet_pdf.json en el .env. Las rutas relativas se resuelven contra esta carpeta. Si template_html no existe se usa la plantilla integrada de app/pdfdatagen.py.",
+  "rutas": {
+    "template_html": "templates/template.html"
+  },
+  "mapeo_categorias": {
+    "valvulas": {"color": "#C62828"},
+    "bombas": {"color": "#C62828"},
+    "actuadores": {"color": "#C62828"},
+    "default": {"color": "#C62828"}
+  }
+}

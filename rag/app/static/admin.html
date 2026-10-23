@@ -1,0 +1,1191 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Relant · Administración del RAG marketplace</title>
+  <script>
+    try { const t = localStorage.getItem("relant.theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch (_) { }
+  </script>
+  <style>
+    :root {
+      --bg: #f4f6f8; --surface: #ffffff; --ink: #17202b; --muted: #5a6676; --line: #d6dde5;
+      --accent: #1f6a86; --accent-ink: #ffffff; --accent-soft: #e3eff4;
+      --paid: #a86410; --paid-soft: #fbecd5; --local: #2a7565; --local-soft: #d9efe9;
+      --danger: #a3332a; --danger-soft: #f8e1de;
+      --c1: #0b6e99; --c2: #b8701a;   /* chart series (validated: CVD + contrast) */
+      --f-body: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+      --f-mono: "Cascadia Mono", Consolas, "SFMono-Regular", Menlo, monospace;
+      color-scheme: light;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg: #0f141a; --surface: #161d25; --ink: #e3e8ee; --muted: #9aa6b4; --line: #2a3440;
+        --accent: #5fb0cf; --accent-ink: #0f141a; --accent-soft: #17303b;
+        --paid: #e3a552; --paid-soft: #3a2b16; --local: #6fc5b0; --local-soft: #173129;
+        --danger: #f08a80; --danger-soft: #3b1d1a; color-scheme: dark;
+        --c1: #3a9fd0; --c2: #c47a1e;
+      }
+    }
+    :root[data-theme="dark"] {
+      --bg: #0f141a; --surface: #161d25; --ink: #e3e8ee; --muted: #9aa6b4; --line: #2a3440;
+      --accent: #5fb0cf; --accent-ink: #0f141a; --accent-soft: #17303b;
+      --paid: #e3a552; --paid-soft: #3a2b16; --local: #6fc5b0; --local-soft: #173129;
+      --danger: #f08a80; --danger-soft: #3b1d1a; color-scheme: dark;
+      --c1: #3a9fd0; --c2: #c47a1e;
+    }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 14.5px; line-height: 1.5; }
+    button, input, select, textarea { font: inherit; color: inherit; }
+    button { cursor: pointer; }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    a { color: var(--accent); }
+
+    header.top { display: flex; align-items: center; gap: 14px; padding: 10px 20px; background: var(--surface); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+    .brand { display: flex; align-items: center; gap: 10px; margin-right: auto; text-decoration: none; color: var(--ink); }
+    .mark { width: 34px; height: 34px; border-radius: 8px; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; font-weight: 700; font-size: 17px; }
+    .brand strong { display: block; font-size: 15px; line-height: 1.2; }
+    .brand span { display: block; font-size: 12.5px; color: var(--muted); line-height: 1.2; }
+    .ghost { border: 1px solid var(--line); background: transparent; border-radius: 8px; padding: 6px 12px; font-size: 13.5px; text-decoration: none; color: var(--ink); display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+    .ghost:hover { border-color: var(--accent); color: var(--accent); }
+    .ghost.danger:hover { border-color: var(--danger); color: var(--danger); }
+    .btn { border: 0; background: var(--accent); color: var(--accent-ink); border-radius: 8px; padding: 7px 14px; font-weight: 600; font-size: 13.5px; white-space: nowrap; }
+    .btn:disabled { opacity: 0.55; cursor: default; }
+
+    nav.tabs { display: flex; gap: 4px; padding: 0 20px; background: var(--surface); border-bottom: 1px solid var(--line); overflow-x: auto; }
+    nav.tabs button { border: 0; background: transparent; padding: 11px 14px; font-size: 14px; color: var(--muted); border-bottom: 2px solid transparent; white-space: nowrap; }
+    nav.tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); font-weight: 600; }
+    nav.tabs button:hover { color: var(--ink); }
+
+    main { width: min(1180px, 100%); margin: 0 auto; padding: 18px 16px 40px; }
+    .bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 14px; }
+    .bar h2 { margin: 0 auto 0 0; font-size: 18px; }
+    .bar input, .bar select, .fld input, .fld select { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 7px 10px; font-size: 13.5px; min-width: 0; }
+    .bar input[type="search"] { width: 220px; }
+    .bar label { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
+
+    .card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+    .tablewrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+    th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+    th { font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); background: var(--bg); position: sticky; top: 0; }
+    tr:last-child td { border-bottom: 0; }
+    tbody tr:hover td { background: color-mix(in srgb, var(--bg) 60%, transparent); }
+    td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+    td .sub { display: block; color: var(--muted); font-size: 12.5px; }
+    td.acts { white-space: nowrap; text-align: right; }
+    td.acts > * + * { margin-left: 6px; }
+    .empty { padding: 28px; text-align: center; color: var(--muted); }
+    .pill { display: inline-block; border-radius: 999px; padding: 1px 9px; font-size: 12px; font-weight: 600; border: 1px solid currentColor; white-space: nowrap; }
+    .pill.ok { color: var(--local); background: var(--local-soft); }
+    .pill.off { color: var(--muted); }
+    .pill.warn { color: var(--paid); background: var(--paid-soft); }
+    .pill.bad { color: var(--danger); background: var(--danger-soft); }
+    .pill.role { color: var(--accent); background: var(--accent-soft); }
+    .pager { display: flex; gap: 8px; align-items: center; justify-content: flex-end; padding: 10px 12px; font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); }
+    code, pre { font-family: var(--f-mono); font-size: 12.5px; }
+    .detail { color: var(--muted); font-family: var(--f-mono); font-size: 12px; max-width: 460px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 14px; }
+    .kpi { padding: 12px 14px; }
+    .kpi span { display: block; font-size: 12px; color: var(--muted); font-weight: 600; letter-spacing: 0.03em; }
+    .kpi strong { display: block; white-space: nowrap; font-size: 22px; font-variant-numeric: tabular-nums; line-height: 1.3; }
+    .chart { padding: 14px 14px 8px; margin-bottom: 14px; }
+    .chart h3 { margin: 0 0 8px; font-size: 13px; color: var(--muted); font-weight: 600; }
+    .chart svg { width: 100%; height: 160px; display: block; }
+    .chart .bar-r { fill: var(--accent); }
+    .chart .bar-r:hover { fill: var(--paid); }
+    .chart text { fill: var(--muted); font-size: 10px; font-family: var(--f-body); }
+    .chart line { stroke: var(--line); }
+
+    .roles { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 12px; }
+    .rolecard { padding: 14px 16px; display: grid; gap: 10px; align-content: start; }
+    .rolecard header { display: flex; align-items: center; gap: 8px; }
+    .rolecard header h3 { margin: 0 auto 0 0; font-size: 16px; }
+    .rolecard .desc { width: 100%; border: 1px solid var(--line); background: var(--bg); border-radius: 8px; padding: 6px 9px; font-size: 13.5px; }
+    .perm { display: flex; gap: 8px; align-items: flex-start; font-size: 13.5px; }
+    .perm input { margin-top: 4px; }
+    .perm code { color: var(--muted); font-size: 11.5px; display: block; }
+    .rolecard .limit { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+    .rolecard .limit input { width: 90px; border: 1px solid var(--line); background: var(--bg); border-radius: 8px; padding: 5px 8px; }
+    .rolecard .foot { display: flex; gap: 8px; justify-content: flex-end; align-items: center; }
+    .rolecard .foot .saved { margin-right: auto; color: var(--local); font-size: 13px; }
+
+    .jobs { padding: 16px; display: grid; gap: 12px; }
+    .jobs pre { background: var(--bg); border-radius: 8px; padding: 10px 12px; overflow-x: auto; margin: 0; max-height: 360px; }
+
+    dialog { border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--ink); padding: 0; width: min(460px, calc(100% - 32px)); }
+    dialog::backdrop { background: rgba(15, 20, 26, 0.45); }
+    dialog form { display: grid; gap: 12px; padding: 20px 22px; }
+    dialog h2 { margin: 0; font-size: 17px; }
+    .fld { display: grid; gap: 4px; }
+    .fld > span { color: var(--muted); font-weight: 600; font-size: 12.5px; }
+    .fld input, .fld select { width: 100%; padding: 8px 10px; font-size: 14px; background: var(--bg); }
+    .check { display: flex; gap: 8px; align-items: center; font-size: 13.5px; }
+    .row-end { display: flex; justify-content: flex-end; gap: 8px; }
+    .formerr { background: var(--danger-soft); border: 1px solid var(--danger); border-radius: 8px; padding: 8px 10px; font-size: 13.5px; }
+    .note { color: var(--muted); font-size: 12.5px; margin: -4px 0 0; }
+    .toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 9px 16px; border-radius: 10px; font-size: 13.5px; z-index: 30; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2); }
+    .denied { padding: 40px 16px; text-align: center; }
+    .quick { display: inline-flex; gap: 4px; flex-wrap: wrap; }
+    /* ---- sub-menus ---- */
+    nav.subtabs { display: flex; gap: 6px; padding: 8px 20px; background: var(--bg); border-bottom: 1px solid var(--line); overflow-x: auto; }
+    nav.subtabs button { border: 1px solid transparent; background: transparent; padding: 5px 12px; border-radius: 999px; font-size: 13.5px; color: var(--muted); white-space: nowrap; }
+    nav.subtabs button:hover { color: var(--ink); }
+    nav.subtabs button[aria-selected="true"] { background: var(--surface); border-color: var(--line); color: var(--ink); font-weight: 600; }
+    /* ---- dashboard ---- */
+    .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 12px; margin-bottom: 14px; }
+    .panel { padding: 14px 16px; }
+    .panel h3, .card > h3 { margin: 0 0 10px; font-size: 13px; color: var(--muted); font-weight: 600; }
+    .hb { display: grid; grid-template-columns: minmax(90px, 38%) 1fr auto; gap: 4px 10px; align-items: center; font-size: 13px; }
+    .hb .lbl { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .hb .lbl small { color: var(--muted); }
+    .hb .trk { height: 10px; border-radius: 4px; background: color-mix(in srgb, var(--line) 55%, transparent); overflow: hidden; }
+    .hb .trk i { display: block; height: 100%; background: var(--c1); border-radius: 0 4px 4px 0; }
+    .hb .val { text-align: right; font-variant-numeric: tabular-nums; color: var(--ink); white-space: nowrap; }
+    .hb .val small { color: var(--muted); }
+    .legend { display: flex; gap: 14px; font-size: 12.5px; color: var(--muted); margin: -2px 0 6px; }
+    .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+    .chart .s1 { fill: var(--c1); } .chart .s2 { fill: var(--c2); }
+    .chart .hit { fill: transparent; } .chart .hit:hover { fill: color-mix(in srgb, var(--ink) 6%, transparent); }
+    .meter { display: grid; gap: 3px; min-width: 130px; }
+    .meter .mt { font-size: 12.5px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .meter .mt small { color: var(--muted); }
+    .meter .trk { height: 6px; border-radius: 99px; background: var(--line); overflow: hidden; }
+    .meter .trk i { display: block; height: 100%; background: var(--local); }
+    .meter.warn .trk i { background: var(--paid); } .meter.over .trk i { background: var(--danger); }
+    .globalcard { padding: 14px 16px; margin-bottom: 14px; display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+    .globalcard .meter { flex: 1; min-width: 220px; }
+    .globalcard strong { font-size: 15px; }
+    .tip { position: fixed; pointer-events: none; background: var(--ink); color: var(--bg); font-size: 12.5px; padding: 6px 9px; border-radius: 8px; z-index: 40; white-space: nowrap; box-shadow: 0 4px 14px rgba(0,0,0,.2); }
+    /* ---- knowledge bases / files / prompts ---- */
+    .scope { font-size: 11.5px; font-weight: 600; border-radius: 999px; padding: 0 8px; border: 1px solid currentColor; white-space: nowrap; }
+    .scope.user { color: var(--local); } .scope.role { color: var(--paid); } .scope.global { color: var(--accent); }
+    .drop { display: block; margin: 14px; border: 1.5px dashed var(--line); border-radius: 12px; padding: 18px; text-align: center; font-size: 13.5px; color: var(--muted); cursor: pointer; }
+    .drop.over { border-color: var(--accent); background: var(--accent-soft); color: var(--ink); }
+    .drop b { color: var(--accent); } .drop small { display: block; margin-top: 4px; font-size: 12px; }
+    .msgbox { margin: 0 14px 12px; }
+    .okbox { background: var(--local-soft); border: 1px solid var(--local); border-radius: 8px; padding: 8px 10px; font-size: 13.5px; }
+    .rolechecks { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13.5px; }
+    .rolechecks label { display: inline-flex; gap: 6px; align-items: center; }
+    textarea.instr { width: 100%; min-height: 120px; border: 1px solid var(--line); background: var(--bg); border-radius: 8px; padding: 8px 10px; font: 13.5px/1.5 var(--f-body); resize: vertical; }
+    .limin { width: 110px; border: 1px solid var(--line); background: var(--bg); border-radius: 8px; padding: 5px 8px; font-variant-numeric: tabular-nums; }
+    .note2 { color: var(--muted); font-size: 12.5px; margin: -6px 0 12px; }
+    dialog.wide { width: min(620px, calc(100% - 32px)); }
+    .stack { display: grid; gap: 14px; }
+    @media (max-width: 640px) {
+      nav.subtabs { padding-left: 12px; padding-right: 12px; }
+      header.top, nav.tabs { padding-left: 12px; padding-right: 12px; }
+      .bar input[type="search"] { width: 100%; }
+      .hide-sm { display: none; }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="top">
+    <a class="brand" href="/">
+      <div class="mark" aria-hidden="true">R</div>
+      <div><strong>Relant · Administración del RAG marketplace</strong><span id="who">…</span></div>
+    </a>
+    <a class="ghost" href="/">← Volver al asistente</a>
+  </header>
+  <nav class="tabs" id="groups" aria-label="Secciones"></nav>
+  <nav class="subtabs" id="tabs" role="tablist" aria-label="Submenú"></nav>
+
+  <main>
+    <div class="denied card" id="denied" hidden>No tienes permisos de administración. <a href="/">Volver al asistente</a></div>
+
+    <!-- users -->
+    <section id="t-users" hidden>
+      <div class="bar">
+        <h2>Usuarios</h2>
+        <input type="search" id="uSearch" placeholder="Buscar usuario, nombre o correo">
+        <button class="btn" id="uNew" type="button">Nuevo usuario</button>
+      </div>
+      <div class="card tablewrap">
+        <table>
+          <thead><tr><th>Usuario</th><th>Rol</th><th>Estado</th><th class="hide-sm">Último acceso</th><th class="hide-sm">Alta</th><th></th></tr></thead>
+          <tbody id="uRows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- roles -->
+    <section id="t-roles" hidden>
+      <div class="bar">
+        <h2>Roles y permisos</h2>
+        <button class="btn" id="rNew" type="button">Nuevo rol</button>
+      </div>
+      <div class="roles" id="rCards"></div>
+    </section>
+
+    <!-- conversations -->
+    <section id="t-convs" hidden>
+      <div class="bar">
+        <h2>Conversaciones</h2>
+        <select id="cUser" aria-label="Usuario"><option value="">Todos los usuarios</option></select>
+        <input type="search" id="cQ" placeholder="Buscar en títulos y mensajes">
+        <label>Desde <input type="date" id="cFrom"></label>
+        <label>Hasta <input type="date" id="cTo"></label>
+        <a class="ghost" id="cCsv" href="#">Exportar CSV</a>
+      </div>
+      <div class="card">
+        <div class="tablewrap">
+          <table>
+            <thead><tr><th>Última actividad</th><th>Usuario</th><th>Conversación</th><th class="num">Mensajes</th><th></th></tr></thead>
+            <tbody id="cRows"></tbody>
+          </table>
+        </div>
+        <div class="pager" id="cPager"></div>
+      </div>
+    </section>
+
+    <!-- usage -->
+    <section id="t-usage" hidden>
+      <div class="bar">
+        <h2>Uso por usuario</h2>
+        <label>Desde <input type="date" id="sFrom"></label>
+        <label>Hasta <input type="date" id="sTo"></label>
+      </div>
+      <div class="kpis" id="sKpis"></div>
+      <div class="card chart"><h3>Preguntas por día</h3><div id="sChart"></div></div>
+      <div class="card tablewrap">
+        <table>
+          <thead><tr><th>Usuario</th><th class="num">Preguntas</th><th class="num">Conversaciones</th><th class="num">Agente</th><th class="num">Errores</th><th class="num">Tokens</th><th class="num">Costo USD</th><th class="num hide-sm">Prom. s</th><th class="hide-sm">Última</th></tr></thead>
+          <tbody id="sRows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- audit -->
+    <section id="t-audit" hidden>
+      <div class="bar">
+        <h2>Bitácora de auditoría</h2>
+        <select id="aAction" aria-label="Acción"><option value="">Todas las acciones</option></select>
+        <select id="aUser" aria-label="Usuario"><option value="">Todos los usuarios</option></select>
+        <label>Desde <input type="date" id="aFrom"></label>
+        <label>Hasta <input type="date" id="aTo"></label>
+      </div>
+      <div class="card">
+        <div class="tablewrap">
+          <table>
+            <thead><tr><th>Fecha</th><th>Usuario</th><th>Acción</th><th class="hide-sm">IP</th><th>Detalle</th></tr></thead>
+            <tbody id="aRows"></tbody>
+          </table>
+        </div>
+        <div class="pager" id="aPager"></div>
+      </div>
+    </section>
+
+    <!-- index -->
+    <section id="t-index" hidden>
+      <div class="bar">
+        <h2>Índice de documentos</h2>
+        <button class="ghost" id="iUpdate" type="button">Actualizar (nuevos y cambiados)</button>
+        <button class="ghost danger" id="iRebuild" type="button">Reconstruir todo</button>
+        <button class="ghost" id="iWeb" type="button">Refrescar sitios de fabricantes</button>
+      </div>
+      <div class="card jobs">
+        <div class="kpis" id="iKpis" style="margin:0"></div>
+        <pre id="iJob"></pre>
+      </div>
+    </section>
+
+    <!-- token dashboard -->
+    <section id="t-tokens" hidden>
+      <div class="bar">
+        <h2>Dashboard de tokens</h2>
+        <div class="quick" id="tQuick" role="group" aria-label="Periodo rápido">
+          <button type="button" class="ghost" data-days="7">7 días</button><button type="button" class="ghost" data-days="30">30 días</button><button type="button" class="ghost" data-days="90">90 días</button><button type="button" class="ghost" data-month="1">Este mes</button>
+        </div>
+        <label>Desde <input type="date" id="tFrom"></label>
+        <label>Hasta <input type="date" id="tTo"></label>
+      </div>
+      <div class="kpis" id="tKpis"></div>
+      <div class="card globalcard" id="tGlobal"></div>
+      <div class="card chart">
+        <h3>Tokens por día</h3>
+        <div class="legend"><span><i style="background:var(--c1)"></i>Entrada (prompt + documentos)</span><span><i style="background:var(--c2)"></i>Salida (respuesta)</span></div>
+        <div id="tChart"></div>
+      </div>
+      <div class="grid2">
+        <div class="card panel"><h3>Por rol</h3><div id="tRoles"></div></div>
+        <div class="card panel"><h3>Por base de conocimientos</h3><div id="tKbs"></div><p class="note2" style="margin:8px 0 0">Una pregunta que consultó varias bases cuenta en cada una.</p></div>
+        <div class="card panel"><h3>Por tipo de respuesta</h3><div id="tRoutes"></div></div>
+        <div class="card panel"><h3>Por prompt</h3><div id="tPrompts"></div></div>
+      </div>
+      <div class="card tablewrap">
+        <table>
+          <thead><tr><th>Usuario</th><th class="num">Preguntas</th><th class="num">Tokens periodo</th><th class="num hide-sm">Costo USD</th><th>Hoy / límite diario</th><th>Mes / límite mensual</th><th>Estado</th><th></th></tr></thead>
+          <tbody id="tRows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- limits -->
+    <section id="t-limits" hidden>
+      <div class="bar"><h2>Límites de tokens</h2></div>
+      <p class="note2">Se revisan antes de cada pregunta. Diario se reinicia a medianoche; mensual, el día 1 (hora del servidor). En usuarios: vacío = hereda del rol, 0 = sin límite.</p>
+      <div class="card panel" style="margin-bottom:14px">
+        <h3>Límite global de la organización</h3>
+        <div class="bar" style="margin:0">
+          <label>Tokens por mes <input class="limin" type="number" min="0" id="gMonth" placeholder="sin límite"></label>
+          <label>Tokens por día <input class="limin" type="number" min="0" id="gDay" placeholder="sin límite"></label>
+          <button class="btn" type="button" id="gSave">Guardar</button>
+        </div>
+      </div>
+      <div class="card tablewrap" style="margin-bottom:14px">
+        <table>
+          <thead><tr><th>Rol</th><th>Preguntas / día</th><th>Tokens / día</th><th>Tokens / mes</th><th></th></tr></thead>
+          <tbody id="lRoles"></tbody>
+        </table>
+      </div>
+      <div class="bar"><h2 style="font-size:16px">Por usuario</h2><input type="search" id="lSearch" placeholder="Buscar usuario"></div>
+      <div class="card tablewrap">
+        <table>
+          <thead><tr><th>Usuario</th><th>Preguntas / día</th><th>Tokens / día</th><th>Tokens / mes</th><th></th></tr></thead>
+          <tbody id="lUsers"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- knowledge bases -->
+    <section id="t-kb" hidden>
+      <div class="bar">
+        <h2>Bases de conocimientos</h2>
+        <select id="kbScope" aria-label="Tipo"><option value="">Todas</option><option value="global">Generales</option><option value="role">De rol</option><option value="user">Personales</option></select>
+        <input type="search" id="kbQ" placeholder="Buscar base o usuario">
+        <a class="ghost" href="/graph" target="_blank" rel="noopener" id="kbGraph">Grafo de datos</a>
+        <button class="btn" id="kbNew" type="button">Nueva base</button>
+      </div>
+      <p class="note2">Cada base tiene su carpeta y su índice. Carpeta raíz: <code id="kbRoot"></code></p>
+      <div class="card tablewrap">
+        <table>
+          <thead><tr><th style="min-width:170px">Base</th><th>Tipo</th><th style="min-width:180px">Acceso</th><th class="num">Archivos</th><th class="num hide-sm">Fragmentos</th><th class="num hide-sm">Disco</th><th class="hide-sm">Indexado</th><th>Estado</th><th></th></tr></thead>
+          <tbody id="kbRows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- files of a base -->
+    <section id="t-files" hidden>
+      <div class="bar">
+        <h2>Archivos</h2>
+        <select id="fKb" aria-label="Base de conocimientos"></select>
+        <input id="fSub" placeholder="Subcarpeta (opcional), p. ej. productos" style="width:240px">
+        <button class="ghost" id="fUpdate" type="button">Reindexar</button>
+        <button class="ghost danger" id="fRebuild" type="button">Reconstruir</button>
+      </div>
+      <div class="card" style="margin-bottom:14px">
+        <label class="drop" id="fDrop"><input type="file" id="fInput" multiple hidden>Arrastra archivos aquí o <b>elige archivos</b> para agregarlos a la base<small id="fHint"></small></label>
+        <div class="msgbox" id="fMsg" hidden></div>
+        <div class="kpis" id="fKpis" style="margin:0 14px 14px"></div>
+        <div class="tablewrap">
+          <table>
+            <thead><tr><th>Archivo</th><th class="num">Tamaño</th><th class="hide-sm">Modificado</th><th>Estado</th><th></th></tr></thead>
+            <tbody id="fRows"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card jobs">
+        <div class="bar" style="margin:0"><h2 style="font-size:15px">Calidad de datos de productos</h2><button class="ghost" type="button" id="fReport">Generar reporte</button><a class="ghost" id="fGraph" href="/graph" target="_blank" rel="noopener">Ver grafo</a></div>
+        <pre id="fReportOut" hidden></pre>
+      </div>
+    </section>
+
+    <!-- prompts per role -->
+    <section id="t-prompts" hidden>
+      <div class="bar">
+        <h2>Prompts por rol</h2>
+        <button class="btn" id="pNew" type="button">Nuevo prompt</button>
+      </div>
+      <p class="note2">Un prompt agrega instrucciones (tono, formato, enfoque) a las respuestas. Nunca reemplaza las reglas: responder solo con los documentos y citar las fuentes.</p>
+      <div class="card tablewrap" style="margin-bottom:14px">
+        <table>
+          <thead><tr><th>Rol</th><th>Prompt predeterminado</th></tr></thead>
+          <tbody id="pDefaults"></tbody>
+        </table>
+      </div>
+      <div class="roles" id="pCards"></div>
+    </section>
+  </main>
+
+  <!-- user dialog -->
+  <dialog id="uDlg">
+    <form id="uForm">
+      <h2 id="uTitle">Nuevo usuario</h2>
+      <label class="fld"><span>Usuario (para iniciar sesión)</span><input id="uName" required pattern="[a-z0-9._@\-]{3,80}" autocapitalize="none" spellcheck="false" title="3-80 caracteres: minúsculas, números y . _ @ -"></label>
+      <label class="fld"><span>Nombre completo</span><input id="uFull" maxlength="150"></label>
+      <label class="fld"><span>Correo</span><input id="uMail" type="email" maxlength="190"></label>
+      <label class="fld"><span>Rol</span><select id="uRole"></select></label>
+      <label class="fld"><span id="uPassLbl">Contraseña temporal</span><input id="uPass" type="text" autocomplete="off"></label>
+      <p class="note" id="uPassNote">El usuario deberá cambiarla al entrar por primera vez.</p>
+      <label class="check" id="uActiveRow"><input type="checkbox" id="uActive"> Activo (puede iniciar sesión)</label>
+      <label class="check" id="uUnlockRow"><input type="checkbox" id="uUnlock"> Desbloquear (borrar intentos fallidos)</label>
+      <div class="formerr" id="uErr" hidden></div>
+      <div class="row-end"><button class="ghost" type="button" data-close>Cancelar</button><button class="btn" type="submit">Guardar</button></div>
+    </form>
+  </dialog>
+
+  <!-- role dialog -->
+  <dialog id="rDlg">
+    <form id="rForm">
+      <h2>Nuevo rol</h2>
+      <label class="fld"><span>Nombre</span><input id="rName" required minlength="2" maxlength="50"></label>
+      <label class="fld"><span>Descripción</span><input id="rDesc" maxlength="255"></label>
+      <p class="note">Los permisos se eligen después de crearlo, en su tarjeta.</p>
+      <div class="formerr" id="rErr" hidden></div>
+      <div class="row-end"><button class="ghost" type="button" data-close>Cancelar</button><button class="btn" type="submit">Crear</button></div>
+    </form>
+  </dialog>
+
+  <!-- knowledge base dialog -->
+  <dialog id="kbDlg" class="wide">
+    <form id="kbForm">
+      <h2 id="kbTitle">Nueva base de conocimientos</h2>
+      <label class="fld"><span>Nombre</span><input id="kbName" required minlength="2" maxlength="150"></label>
+      <label class="fld" id="kbSlugRow"><span>Identificador (opcional; se genera del nombre)</span><input id="kbSlug" maxlength="80" pattern="[a-z0-9][a-z0-9_\-]{1,79}" autocapitalize="none" spellcheck="false"></label>
+      <label class="fld"><span>Descripción</span><input id="kbDesc" maxlength="500"></label>
+      <label class="fld" id="kbDirRow"><span>Carpeta existente (opcional, ruta absoluta del servidor)</span><input id="kbDir" maxlength="500" placeholder="vacío = carpeta nueva dentro de la raíz"></label>
+      <div class="fld" id="kbReadRow"><span>Pueden consultarla (ninguno marcado = todos los roles)</span><div class="rolechecks" id="kbRead"></div></div>
+      <div class="fld" id="kbWriteRow"><span>Pueden agregar archivos (además de quien administra bases)</span><div class="rolechecks" id="kbWrite"></div></div>
+      <label class="check"><input type="checkbox" id="kbSel"> Seleccionada por defecto en el chat</label>
+      <label class="check" id="kbActiveRow"><input type="checkbox" id="kbActive"> Activa</label>
+      <div class="formerr" id="kbErr" hidden></div>
+      <div class="row-end"><button class="ghost" type="button" data-close>Cancelar</button><button class="btn" type="submit">Guardar</button></div>
+    </form>
+  </dialog>
+
+  <!-- prompt dialog -->
+  <dialog id="pDlg" class="wide">
+    <form id="pForm">
+      <h2>Nuevo prompt</h2>
+      <label class="fld"><span>Nombre</span><input id="pName" required minlength="2" maxlength="120"></label>
+      <label class="fld"><span>Descripción corta</span><input id="pDesc" maxlength="300"></label>
+      <label class="fld"><span>Instrucciones</span><textarea class="instr" id="pInstr" required minlength="5" maxlength="8000" placeholder="Ej.: Responde para el equipo de importaciones: código, costo, existencia…"></textarea></label>
+      <div class="fld"><span>Roles que pueden usarlo (ninguno = todos)</span><div class="rolechecks" id="pRoles"></div></div>
+      <div class="formerr" id="pErr" hidden></div>
+      <div class="row-end"><button class="ghost" type="button" data-close>Cancelar</button><button class="btn" type="submit">Crear</button></div>
+    </form>
+  </dialog>
+
+  <!-- user limits dialog -->
+  <dialog id="limDlg">
+    <form id="limForm">
+      <h2 id="limTitle">Límites</h2>
+      <p class="note">Vacío = hereda del rol · 0 = sin límite</p>
+      <label class="fld"><span>Preguntas por día</span><input id="limQ" type="number" min="0"></label>
+      <label class="fld"><span>Tokens por día</span><input id="limD" type="number" min="0"></label>
+      <label class="fld"><span>Tokens por mes</span><input id="limM" type="number" min="0"></label>
+      <div class="formerr" id="limErr" hidden></div>
+      <div class="row-end"><button class="ghost" type="button" data-close>Cancelar</button><button class="btn" type="submit">Guardar</button></div>
+    </form>
+  </dialog>
+
+  <script>
+    (() => {
+      "use strict";
+      const $ = (s) => document.querySelector(s);
+      const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+      const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+      const fmtDate = (iso, withTime = true) => iso ? new Date(iso).toLocaleString("es-MX", withTime ? { dateStyle: "medium", timeStyle: "short" } : { dateStyle: "medium" }) : "—";
+      const n = (v) => Number(v || 0).toLocaleString("es-MX");
+      const usd = (v) => "$" + Number(v || 0).toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+      const ROLE_LABEL = { admin: "Administrador", supervisor: "Supervisor", usuario: "Usuario", importaciones: "Importaciones", exportaciones: "Exportaciones" };
+      const ACTION_LABEL = {
+        login: "Inicio de sesión", login_failed: "Intento fallido", logout: "Cierre de sesión", password_changed: "Cambio de contraseña",
+        user_created: "Usuario creado", user_updated: "Usuario modificado", role_created: "Rol creado", role_updated: "Rol modificado",
+        role_deleted: "Rol eliminado", conversation_deleted: "Conversación eliminada", messages_exported: "Exportación CSV",
+        index_started: "Indexación", web_refresh: "Refresco web",
+        kb_created: "Base creada", kb_updated: "Base modificada", kb_deleted: "Base eliminada", kb_reindex: "Reindexación de base",
+        kb_file_uploaded: "Archivo agregado", kb_file_deleted: "Archivo eliminado", prompt_created: "Prompt creado",
+        prompt_updated: "Prompt modificado", prompt_deleted: "Prompt eliminado", prompt_role_default: "Prompt de rol",
+        limits_updated: "Límites modificados", quote_created: "Cotización multiagente",
+      };
+      let me = null, roles = [], permLabels = {}, users = [];
+      const can = (p) => me.user.permissions.includes(p);
+
+      function toast(msg) {
+        const t = el("div", "toast"); t.textContent = msg; document.body.appendChild(t);
+        setTimeout(() => t.remove(), 2600);
+      }
+      async function api(path, opts = {}) {
+        const o = { credentials: "same-origin", ...opts, headers: { ...(opts.headers || {}) } };
+        if (o.body && typeof o.body !== "string") { o.body = JSON.stringify(o.body); o.headers["Content-Type"] = "application/json"; }
+        const r = await fetch(path, o);
+        let data = null;
+        try { data = await r.json(); } catch (_) { }
+        if (r.status === 401) { location.href = "/"; throw new Error("401"); }
+        if (!r.ok) {
+          const d = data && (typeof data.detail === "string" ? data.detail : (data.detail || []).map((x) => x.msg).join("; "));
+          if (d === "must_change_password") { location.href = "/"; }
+          throw new Error(d || `Error ${r.status}`);
+        }
+        return data;
+      }
+      const qs = (o) => new URLSearchParams(Object.entries(o).filter(([, v]) => v !== "" && v != null)).toString();
+      document.querySelectorAll("[data-close]").forEach((b) => b.addEventListener("click", () => b.closest("dialog").close()));
+
+      // ------------------------------------------------------------ navigation: groups + sub-menus
+      const TABS = [
+        ["users", "Usuarios", () => can("users.manage")], ["roles", "Roles y permisos", () => can("users.manage")],
+        ["kb", "Bases de conocimientos", () => can("kb.manage")], ["files", "Archivos", () => can("kb.manage")],
+        ["prompts", "Prompts por rol", () => can("prompts.manage")], ["index", "Índice general", () => can("index.manage")],
+        ["tokens", "Dashboard de tokens", () => can("reports.read")], ["limits", "Límites", () => can("limits.manage") || can("reports.read")],
+        ["usage", "Uso por usuario", () => can("reports.read")],
+        ["convs", "Conversaciones", () => can("conversations.read_all")], ["audit", "Auditoría", () => can("reports.read")],
+      ];
+      const GROUPS = [
+        ["people", "Usuarios y roles", ["users", "roles"]],
+        ["knowledge", "Base de conocimientos", ["kb", "files", "prompts", "index"]],
+        ["consumo", "Consumo de tokens", ["tokens", "limits", "usage"]],
+        ["supervision", "Supervisión", ["convs", "audit"]],
+      ];
+      const loaded = {};                // tab -> true when the caller loads it itself
+      let visibleTabs = [];
+      const groupOf = (id) => GROUPS.find((g) => g[2].includes(id));
+      function renderSubtabs(gid) {
+        const g = GROUPS.find((x) => x[0] === gid), nav = $("#tabs");
+        nav.innerHTML = "";
+        g[2].filter((t) => visibleTabs.includes(t)).forEach((id) => {
+          const b = el("button", null, esc(TABS.find((t) => t[0] === id)[1])); b.type = "button"; b.dataset.tab = id; b.setAttribute("role", "tab");
+          b.addEventListener("click", () => showTab(id)); nav.appendChild(b);
+        });
+      }
+      function showTab(id) {
+        const g = groupOf(id);
+        document.querySelectorAll("#groups button").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.group === g[0])));
+        renderSubtabs(g[0]);
+        TABS.forEach(([t]) => { $("#t-" + t).hidden = t !== id; });
+        document.querySelectorAll("#tabs button").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.tab === id)));
+        history.replaceState(null, "", "#" + id);
+        if (loaded[id]) { loaded[id] = false; return; }   // already loaded by the caller
+        LOAD[id]();
+      }
+
+      // ------------------------------------------------------------ users
+      async function loadUsers() {
+        const d = await api("/admin/users?" + qs({ q: $("#uSearch").value.trim() }));
+        const tb = $("#uRows"); tb.innerHTML = "";
+        if (!d.items.length) { tb.innerHTML = `<tr><td colspan="6" class="empty">Sin usuarios.</td></tr>`; return; }
+        d.items.forEach((u) => {
+          const st = !u.is_active ? `<span class="pill off">Inactivo</span>` : u.locked ? `<span class="pill bad">Bloqueado</span>`
+            : u.must_change_password ? `<span class="pill warn">Debe cambiar contraseña</span>` : `<span class="pill ok">Activo</span>`;
+          const tr = el("tr");
+          tr.innerHTML = `<td><strong>${esc(u.username)}</strong><span class="sub">${esc(u.full_name || "")}${u.email ? " · " + esc(u.email) : ""}</span></td>
+            <td><span class="pill role">${esc(ROLE_LABEL[u.role] || u.role)}</span></td><td>${st}</td>
+            <td class="hide-sm">${fmtDate(u.last_login_at)}</td><td class="hide-sm">${fmtDate(u.created_at, false)}</td><td class="acts"></td>`;
+          const acts = tr.querySelector(".acts");
+          const ed = el("button", "ghost", "Editar"); ed.type = "button"; ed.addEventListener("click", () => openUser(u)); acts.appendChild(ed);
+          if (can("conversations.read_all")) {
+            const cv = el("button", "ghost", "Conversaciones"); cv.type = "button";
+            cv.addEventListener("click", () => { $("#cUser").value = String(u.id); loaded.convs = true; showTab("convs"); loadConvs(0); });
+            acts.appendChild(cv);
+          }
+          tb.appendChild(tr);
+        });
+      }
+      let editing = null;
+      function fillRoleSelect(sel, value) {
+        sel.innerHTML = roles.map((r) => `<option value="${r.id}">${esc(ROLE_LABEL[r.name] || r.name)}</option>`).join("");
+        if (value) sel.value = String(value);
+      }
+      function openUser(u) {
+        editing = u || null;
+        $("#uTitle").textContent = u ? `Editar ${u.username}` : "Nuevo usuario";
+        $("#uName").value = u ? u.username : ""; $("#uName").disabled = !!u;
+        $("#uFull").value = u ? u.full_name : ""; $("#uMail").value = u ? (u.email || "") : "";
+        fillRoleSelect($("#uRole"), u ? u.role_id : (roles.find((r) => r.name === "usuario") || roles[0] || {}).id);
+        $("#uPass").value = ""; $("#uPass").required = !u;
+        $("#uPassLbl").textContent = u ? "Nueva contraseña temporal (opcional)" : "Contraseña temporal";
+        $("#uPassNote").textContent = u ? "Si la escribes, se cierran sus sesiones y deberá cambiarla al entrar." : "El usuario deberá cambiarla al entrar por primera vez.";
+        $("#uActiveRow").hidden = !u; $("#uActive").checked = u ? u.is_active : true;
+        $("#uUnlockRow").hidden = !(u && u.locked); $("#uUnlock").checked = false;
+        $("#uErr").hidden = true;
+        $("#uDlg").showModal();
+      }
+      $("#uNew").addEventListener("click", () => openUser(null));
+      $("#uForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        try {
+          if (editing) {
+            const body = { full_name: $("#uFull").value, email: $("#uMail").value, role_id: +$("#uRole").value, is_active: $("#uActive").checked };
+            if ($("#uPass").value) body.password = $("#uPass").value;
+            if ($("#uUnlock").checked) body.unlock = true;
+            await api(`/admin/users/${editing.id}`, { method: "PATCH", body });
+            toast("Usuario actualizado");
+          } else {
+            await api("/admin/users", { method: "POST", body: { username: $("#uName").value.trim().toLowerCase(), full_name: $("#uFull").value, email: $("#uMail").value || null, role_id: +$("#uRole").value, password: $("#uPass").value } });
+            toast("Usuario creado");
+          }
+          $("#uDlg").close(); loadUsers(); users = (await api("/admin/user-options")).items; fillUserSelects();
+        } catch (ex) { $("#uErr").textContent = ex.message; $("#uErr").hidden = false; }
+      });
+      let uTimer = null;
+      $("#uSearch").addEventListener("input", () => { clearTimeout(uTimer); uTimer = setTimeout(loadUsers, 250); });
+
+      // ------------------------------------------------------------ roles
+      async function loadRoles() {
+        const d = await api("/admin/roles");
+        roles = d.items; permLabels = d.permissions;
+        const box = $("#rCards"); box.innerHTML = "";
+        roles.forEach((r) => {
+          const c = el("div", "card rolecard");
+          c.innerHTML = `<header><h3>${esc(ROLE_LABEL[r.name] || r.name)}</h3><span class="pill off">${r.users} usuario${r.users === 1 ? "" : "s"}</span></header>
+            <input class="desc" value="${esc(r.description)}" aria-label="Descripción" maxlength="255">
+            <div class="perms">${Object.entries(permLabels).map(([k, v]) => `<label class="perm"><input type="checkbox" value="${k}" ${r.permissions.includes(k) ? "checked" : ""}><span>${esc(v)}<code>${k}</code></span></label>`).join("")}</div>
+            <label class="limit">Límite de preguntas por día <input type="number" min="0" max="100000" value="${r.daily_query_limit || ""}" placeholder="sin límite"></label>
+            <div class="foot"><span class="saved" hidden>Guardado</span>${r.is_system ? "" : '<button class="ghost danger" type="button" data-del>Eliminar</button>'}<button class="btn" type="button" data-save>Guardar</button></div>`;
+          c.querySelector("[data-save]").addEventListener("click", async () => {
+            const perms = [...c.querySelectorAll(".perms input:checked")].map((i) => i.value);
+            const lim = c.querySelector(".limit input").value;
+            try {
+              await api(`/admin/roles/${r.id}`, { method: "PATCH", body: { description: c.querySelector(".desc").value, permissions: perms, daily_query_limit: lim ? +lim : null } });
+              const s = c.querySelector(".saved"); s.hidden = false; setTimeout(() => { s.hidden = true; }, 2000);
+            } catch (ex) { alert(ex.message); }
+          });
+          c.querySelector("[data-del]")?.addEventListener("click", async () => {
+            if (!confirm(`¿Eliminar el rol «${r.name}»?`)) return;
+            try { await api(`/admin/roles/${r.id}`, { method: "DELETE" }); loadRoles(); } catch (ex) { alert(ex.message); }
+          });
+          box.appendChild(c);
+        });
+      }
+      $("#rNew").addEventListener("click", () => { $("#rForm").reset(); $("#rErr").hidden = true; $("#rDlg").showModal(); });
+      $("#rForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        try {
+          await api("/admin/roles", { method: "POST", body: { name: $("#rName").value.trim(), description: $("#rDesc").value, permissions: ["chat", "documents.read"] } });
+          $("#rDlg").close(); toast("Rol creado"); loadRoles();
+        } catch (ex) { $("#rErr").textContent = ex.message; $("#rErr").hidden = false; }
+      });
+
+      // ------------------------------------------------------------ conversations
+      const PAGE = 50;
+      function convFilters() { return { user_id: $("#cUser").value, q: $("#cQ").value.trim(), date_from: $("#cFrom").value, date_to: $("#cTo").value }; }
+      async function loadConvs(offset = 0) {
+        const f = convFilters();
+        $("#cCsv").href = "/admin/messages.csv?" + qs({ user_id: f.user_id, date_from: f.date_from, date_to: f.date_to });
+        const d = await api("/admin/conversations?" + qs({ ...f, limit: PAGE, offset }));
+        const tb = $("#cRows"); tb.innerHTML = "";
+        if (!d.items.length) tb.innerHTML = `<tr><td colspan="5" class="empty">Sin conversaciones con esos filtros.</td></tr>`;
+        d.items.forEach((c) => {
+          const tr = el("tr");
+          tr.innerHTML = `<td>${fmtDate(c.updated_at)}</td><td>${esc(c.user.full_name || c.user.username)}<span class="sub">${esc(c.user.username)}</span></td>
+            <td>${esc(c.title)}${c.deleted ? ' <span class="pill off">eliminada por el usuario</span>' : ""}</td><td class="num">${c.message_count}</td>
+            <td class="acts"><a class="ghost" href="/?c=${c.id}" target="_blank" rel="noopener">Abrir</a></td>`;
+          tb.appendChild(tr);
+        });
+        pager($("#cPager"), d.total, offset, PAGE, loadConvs);
+      }
+      function pager(box, total, offset, size, fn) {
+        box.innerHTML = `<span>${n(total)} resultado${total === 1 ? "" : "s"}${total > size ? ` · ${offset + 1}–${Math.min(offset + size, total)}` : ""}</span>`;
+        if (offset > 0) { const b = el("button", "ghost", "Anterior"); b.type = "button"; b.onclick = () => fn(Math.max(0, offset - size)); box.appendChild(b); }
+        if (offset + size < total) { const b = el("button", "ghost", "Siguiente"); b.type = "button"; b.onclick = () => fn(offset + size); box.appendChild(b); }
+      }
+      let cTimer = null;
+      ["#cUser", "#cFrom", "#cTo"].forEach((s) => $(s).addEventListener("change", () => loadConvs(0)));
+      $("#cQ").addEventListener("input", () => { clearTimeout(cTimer); cTimer = setTimeout(() => loadConvs(0), 300); });
+
+      // ------------------------------------------------------------ usage
+      async function loadUsage() {
+        const d = await api("/admin/usage?" + qs({ date_from: $("#sFrom").value, date_to: $("#sTo").value }));
+        const t = d.totals;
+        $("#sKpis").innerHTML = [["Preguntas", n(t.questions)], ["Usuarios activos", n(t.active_users)], ["Con agente", n(t.agent_answers)],
+        ["Errores", n(t.errors)], ["Tokens", n(t.input_tokens + t.output_tokens)], ["Costo estimado", usd(t.cost_usd)]]
+          .map(([k, v]) => `<div class="card kpi"><span>${k}</span><strong>${v}</strong></div>`).join("");
+        drawChart($("#sChart"), d.daily);
+        const tb = $("#sRows"); tb.innerHTML = "";
+        if (!d.items.length) tb.innerHTML = `<tr><td colspan="9" class="empty">Sin actividad en el periodo.</td></tr>`;
+        d.items.forEach((u) => {
+          const tr = el("tr");
+          tr.innerHTML = `<td><strong>${esc(u.full_name || u.username)}</strong><span class="sub">${esc(u.username)} · ${esc(ROLE_LABEL[u.role] || u.role)}</span></td>
+            <td class="num">${n(u.questions)}</td><td class="num">${n(u.conversations)}</td><td class="num">${n(u.agent_answers)}</td><td class="num">${n(u.errors)}</td>
+            <td class="num">${n(u.input_tokens + u.output_tokens)}</td><td class="num">${usd(u.cost_usd)}</td><td class="num hide-sm">${(u.avg_ms / 1000).toFixed(1)}</td>
+            <td class="hide-sm">${fmtDate(u.last_at)}</td>`;
+          tb.appendChild(tr);
+        });
+      }
+      function drawChart(box, daily) {
+        if (!daily.length) { box.innerHTML = `<div class="empty">Sin datos.</div>`; return; }
+        // fill missing days so gaps show as zero
+        const byDay = new Map(daily.map((d) => [d.date, d]));
+        const days = [];
+        for (let t = new Date(daily[0].date + "T00:00"); t <= new Date(daily[daily.length - 1].date + "T00:00"); t.setDate(t.getDate() + 1)) {
+          const k = `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, "0")}-${String(t.getDate()).padStart(2, "0")}`;
+          days.push(byDay.get(k) || { date: k, questions: 0, cost_usd: 0 });
+        }
+        const W = 1000, H = 160, top = 10, bottom = 22, left = 34;
+        const max = Math.max(...days.map((d) => d.questions), 1);
+        const step = (W - left) / days.length, bw = Math.min(48, Math.max(2, step * 0.7));
+        const y = (v) => top + (H - top - bottom) * (1 - v / max);
+        let s = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Preguntas por día">`;
+        [...new Set([0, Math.round(max / 2), max])].forEach((v) => { s += `<line x1="${left}" x2="${W}" y1="${y(v)}" y2="${y(v)}"/><text x="${left - 6}" y="${y(v) + 3}" text-anchor="end">${v}</text>`; });
+        const every = Math.ceil(days.length / 10);
+        days.forEach((d, i) => {
+          const x = left + i * step + (step - bw) / 2;
+          s += `<rect class="bar-r" x="${x}" y="${y(d.questions)}" width="${bw}" height="${Math.max(0, H - bottom - y(d.questions))}" rx="2"><title>${d.date}: ${d.questions} preguntas · ${usd(d.cost_usd)}</title></rect>`;
+          if (i % every === 0) s += `<text x="${x + bw / 2}" y="${H - 6}" text-anchor="middle">${d.date.slice(5)}</text>`;
+        });
+        box.innerHTML = s + "</svg>";
+      }
+      ["#sFrom", "#sTo"].forEach((s) => $(s).addEventListener("change", loadUsage));
+
+      // ------------------------------------------------------------ audit
+      async function loadAudit(offset = 0) {
+        const d = await api("/admin/audit?" + qs({ action: $("#aAction").value, user_id: $("#aUser").value, date_from: $("#aFrom").value, date_to: $("#aTo").value, limit: 100, offset }));
+        const sel = $("#aAction"), cur = sel.value;
+        sel.innerHTML = `<option value="">Todas las acciones</option>` + d.actions.map((a) => `<option value="${esc(a)}">${esc(ACTION_LABEL[a] || a)}</option>`).join("");
+        sel.value = cur;
+        const tb = $("#aRows"); tb.innerHTML = "";
+        if (!d.items.length) tb.innerHTML = `<tr><td colspan="5" class="empty">Sin eventos.</td></tr>`;
+        d.items.forEach((a) => {
+          const bad = a.action === "login_failed";
+          const det = a.detail ? JSON.stringify(a.detail) : "";
+          const tr = el("tr");
+          tr.innerHTML = `<td>${fmtDate(a.created_at)}</td><td>${esc(a.username || "—")}</td>
+            <td><span class="pill ${bad ? "bad" : "off"}">${esc(ACTION_LABEL[a.action] || a.action)}</span></td>
+            <td class="hide-sm">${esc(a.ip)}</td><td><div class="detail" title="${esc(det)}">${esc(det)}</div></td>`;
+          tb.appendChild(tr);
+        });
+        pager($("#aPager"), d.total, offset, 100, loadAudit);
+      }
+      ["#aAction", "#aUser", "#aFrom", "#aTo"].forEach((s) => $(s).addEventListener("change", () => loadAudit(0)));
+
+      // ------------------------------------------------------------ index
+      let iTimer = null;
+      async function loadIndex() {
+        clearTimeout(iTimer);
+        const [h, job] = await Promise.all([api("/health"), api("/admin/index")]);
+        const ix = h.index || {}, r = h.router || {};
+        $("#iKpis").innerHTML = [["Documentos", n(ix.files)], ["Fragmentos", n(ix.chunks)], ["Vectores", n(ix.vectors)],
+        ["Indexado", ix.indexed_at ? ix.indexed_at.replace("T", " ").slice(0, 16) : "—"], ["Respuestas rápidas", r.fast_share != null ? Math.round(r.fast_share * 100) + "%" : "—"]]
+          .map(([k, v]) => `<div class="card kpi"><span>${k}</span><strong>${v}</strong></div>`).join("");
+        $("#iJob").textContent = JSON.stringify({ trabajo: job, ultima_sincronizacion: ix.last_sync, carpeta: h.config }, null, 2);
+        if (job.state === "running" && !$("#t-index").hidden) iTimer = setTimeout(loadIndex, 4000);
+      }
+      async function startIndex(mode) {
+        if (mode === "rebuild" && !confirm("Reconstruir vuelve a procesar todos los documentos (los vectores ya pagados se reutilizan de la caché). ¿Continuar?")) return;
+        try { const r = await api("/admin/index", { method: "POST", body: { mode } }); toast(r.started ? "Indexación iniciada" : (r.reason || "Ya hay una indexación en curso")); loadIndex(); } catch (ex) { alert(ex.message); }
+      }
+      $("#iUpdate").addEventListener("click", () => startIndex("update"));
+      $("#iRebuild").addEventListener("click", () => startIndex("rebuild"));
+      $("#iWeb").addEventListener("click", async () => { try { await api("/admin/web/refresh", { method: "POST" }); toast("Refresco de sitios iniciado"); } catch (ex) { alert(ex.message); } });
+
+      // ------------------------------------------------------------ token dashboard
+      const roleName = (r) => ROLE_LABEL[r] || r;
+      const ROUTE_ES = { fast: "Respuesta rápida", "fast+table": "Rápida + tabla", agent: "Agente", clarify: "Aclaración", quote: "Cotización multiagente", error: "Error" };
+      const STATUS = { ok: ["En rango", "ok"], warn: ["Cerca del límite", "warn"], over: ["Límite alcanzado", "bad"], unlimited: ["Sin límite", "off"] };
+      const short = (v) => { v = Number(v || 0); return v >= 1e6 ? (v / 1e6).toFixed(v >= 1e7 ? 0 : 1) + " M" : v >= 1e3 ? (v / 1e3).toFixed(v >= 1e4 ? 0 : 1) + " k" : n(v); };
+      const ymd = (x) => `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, "0")}-${String(x.getDate()).padStart(2, "0")}`;
+      function meter(used, limit, warnPct) {
+        if (!limit) return `<div class="meter"><span class="mt">${n(used)} <small>· sin límite</small></span></div>`;
+        const pct = 100 * used / limit, cls = pct >= 100 ? "over" : pct >= (warnPct || 80) ? "warn" : "";
+        return `<div class="meter ${cls}"><span class="mt">${n(used)} <small>/ ${n(limit)} · ${pct.toFixed(0)}%</small></span><span class="trk"><i style="width:${Math.min(100, pct).toFixed(1)}%"></i></span></div>`;
+      }
+      function hbars(box, rows, empty) {
+        if (!rows.length) { box.innerHTML = `<div class="empty" style="padding:12px">${empty}</div>`; return; }
+        const max = Math.max(...rows.map((r) => r.value), 1);
+        box.innerHTML = `<div class="hb">` + rows.map((r) => `<span class="lbl" title="${esc(r.title || r.label)}">${esc(r.label)}${r.sub ? ` <small>${esc(r.sub)}</small>` : ""}</span>`
+          + `<span class="trk" title="${esc(r.tip || "")}"><i style="width:${(100 * r.value / max).toFixed(1)}%"></i></span><span class="val">${short(r.value)}${r.extra ? ` <small>${esc(r.extra)}</small>` : ""}</span>`).join("") + `</div>`;
+      }
+      let tipEl = null;
+      function tip(e, html) {
+        if (!tipEl) { tipEl = el("div", "tip"); document.body.appendChild(tipEl); }
+        if (!html) { tipEl.hidden = true; return; }
+        tipEl.innerHTML = html; tipEl.hidden = false;
+        const x = Math.min(e.clientX + 14, innerWidth - tipEl.offsetWidth - 8);
+        tipEl.style.left = x + "px"; tipEl.style.top = (e.clientY - tipEl.offsetHeight - 10) + "px";
+      }
+      function tokenChart(box, daily, from, to) {
+        if (!daily.length) { box.innerHTML = `<div class="empty">Sin consumo en el periodo.</div>`; return; }
+        const byDay = new Map(daily.map((d) => [d.date, d]));
+        const days = [];
+        const start = new Date((from || daily[0].date) + "T00:00"), end = new Date((to || daily[daily.length - 1].date) + "T00:00");
+        for (let t = new Date(start); t <= end; t.setDate(t.getDate() + 1)) { const k = ymd(t); days.push(byDay.get(k) || { date: k, questions: 0, input_tokens: 0, output_tokens: 0, cost_usd: 0 }); }
+        const W = Math.max(300, Math.round(box.clientWidth || 1000)), H = 190, top = 10, bottom = 22, left = 48;
+        const max = Math.max(...days.map((d) => d.input_tokens + d.output_tokens), 1);
+        const step = (W - left) / days.length, bw = Math.min(40, Math.max(2, step * 0.72));
+        const y = (v) => top + (H - top - bottom) * (1 - v / max);
+        let sv = `<svg viewBox="0 0 ${W} ${H}" style="height:${H}px" role="img" aria-label="Tokens por día, entrada y salida">`;
+        [0, max / 2, max].forEach((v) => { sv += `<line x1="${left}" x2="${W}" y1="${y(v)}" y2="${y(v)}"/><text x="${left - 6}" y="${y(v) + 3}" text-anchor="end">${short(v)}</text>`; });
+        const every = Math.ceil(days.length / Math.max(3, Math.floor((W - left) / 70)));
+        days.forEach((d, i) => {
+          const x = left + i * step + (step - bw) / 2, tot = d.input_tokens + d.output_tokens;
+          const yIn = y(d.input_tokens), yTot = y(tot), base = H - bottom;
+          if (d.input_tokens) sv += `<rect class="s1" x="${x}" y="${yIn}" width="${bw}" height="${Math.max(0, base - yIn)}"/>`;
+          if (d.output_tokens) sv += `<rect class="s2" x="${x}" y="${yTot}" width="${bw}" height="${Math.max(0, yIn - yTot - (d.input_tokens ? 2 : 0))}" rx="${Math.min(4, bw / 3)}"/>`;
+          sv += `<rect class="hit" data-i="${i}" x="${left + i * step}" y="${top}" width="${step}" height="${H - top - bottom}"/>`;
+          if (i % every === 0) sv += `<text x="${x + bw / 2}" y="${H - 6}" text-anchor="middle">${d.date.slice(5)}</text>`;
+        });
+        box.innerHTML = sv + "</svg>";
+        box.querySelectorAll(".hit").forEach((r) => {
+          const d = days[+r.dataset.i];
+          r.addEventListener("mousemove", (e) => tip(e, `<b>${d.date}</b><br>${n(d.input_tokens + d.output_tokens)} tokens · ${n(d.questions)} preguntas<br>Entrada ${n(d.input_tokens)} · Salida ${n(d.output_tokens)}<br>${usd(d.cost_usd)}`));
+          r.addEventListener("mouseleave", (e) => tip(e, ""));
+        });
+      }
+      let lastChart = null;
+      addEventListener("resize", () => { if (lastChart && !$("#t-tokens").hidden) tokenChart(...lastChart); });
+      async function loadTokens() {
+        const from = $("#tFrom").value, to = $("#tTo").value;
+        const d = await api("/admin/token-dashboard?" + qs({ date_from: from, date_to: to }));
+        const t = d.totals, g = d.global;
+        $("#tKpis").innerHTML = [["Tokens del periodo", short(t.tokens)], ["Entrada / salida", `${short(t.input_tokens)} / ${short(t.output_tokens)}`],
+        ["Costo estimado", usd(t.cost_usd)], ["Preguntas", n(t.questions)], ["Tokens por pregunta", n(t.avg_tokens_per_question)],
+        ["Usuarios activos", n(t.active_users)], ["Cerca / sobre límite", `${t.users_warn} / ${t.users_over}`]]
+          .map(([k, v]) => `<div class="card kpi"><span>${k}</span><strong>${v}</strong></div>`).join("");
+        $("#tGlobal").innerHTML = `<div><span class="sub" style="color:var(--muted);font-size:12px;font-weight:600">ORGANIZACIÓN · ESTE MES</span><br><strong>${n(g.tokens_month)} tokens</strong> <span style="color:var(--muted)">· hoy ${n(g.tokens_today)}</span></div>`
+          + meter(g.tokens_month, g.monthly_token_limit, g.warn_pct)
+          + `<span style="color:var(--muted);font-size:12.5px">Modelo ${esc(d.pricing.model)} · US$${d.pricing.in_per_mtok}/M entrada · US$${d.pricing.out_per_mtok}/M salida · reinicia ${esc(g.resets_on)}</span>`
+          + (can("limits.manage") ? `<button class="ghost" type="button" id="tGoLimits">Ajustar límites</button>` : "");
+        $("#tGoLimits")?.addEventListener("click", () => showTab("limits"));
+        lastChart = [$("#tChart"), d.daily, from, to];
+        tokenChart(...lastChart);
+        hbars($("#tRoles"), d.by_role.map((r) => ({ label: roleName(r.role), sub: `${r.active_users}/${r.users} usuarios`, value: r.tokens, extra: usd(r.cost_usd),
+          tip: r.monthly_token_limit ? `Límite mensual por usuario: ${n(r.monthly_token_limit)}` : "" })), "Sin consumo.");
+        hbars($("#tKbs"), d.by_kb.map((k) => ({ label: k.name, sub: k.slug, value: k.tokens, extra: `${n(k.questions)} preg.` })), "Sin consumo.");
+        hbars($("#tRoutes"), d.by_route.map((r) => ({ label: ROUTE_ES[r.route] || r.route, value: r.tokens, extra: `${n(r.questions)} resp.` })), "Sin consumo.");
+        hbars($("#tPrompts"), d.by_prompt.map((r) => ({ label: r.name, value: r.tokens, extra: `${n(r.questions)} preg.` })), "Sin consumo.");
+        const tb = $("#tRows"); tb.innerHTML = "";
+        d.by_user.forEach((u) => {
+          const [sl, sc] = STATUS[u.status] || [u.status, "off"];
+          const tr = el("tr");
+          tr.innerHTML = `<td><strong>${esc(u.full_name || u.username)}</strong><span class="sub">${esc(u.username)} · ${esc(roleName(u.role))}${u.is_active ? "" : " · inactivo"}</span></td>
+            <td class="num">${n(u.questions)}</td><td class="num">${n(u.tokens)}</td><td class="num hide-sm">${usd(u.cost_usd)}</td>
+            <td>${meter(u.tokens_today, u.daily_token_limit, d.global.warn_pct)}</td><td>${meter(u.tokens_month, u.monthly_token_limit, d.global.warn_pct)}</td>
+            <td><span class="pill ${sc}">${sl}</span></td><td class="acts"></td>`;
+          if (can("limits.manage")) {
+            const b = el("button", "ghost", "Límites"); b.type = "button"; b.addEventListener("click", () => openLimits(u.user_id, u.username)); tr.querySelector(".acts").appendChild(b);
+          }
+          tb.appendChild(tr);
+        });
+        if (!d.by_user.length) tb.innerHTML = `<tr><td colspan="8" class="empty">Sin usuarios.</td></tr>`;
+      }
+      ["#tFrom", "#tTo"].forEach((x) => $(x).addEventListener("change", loadTokens));
+      $("#tQuick").addEventListener("click", (e) => {
+        const b = e.target.closest("button"); if (!b) return;
+        const today = new Date();
+        const from = b.dataset.month ? new Date(today.getFullYear(), today.getMonth(), 1) : new Date(Date.now() - (+b.dataset.days - 1) * 86400000);
+        $("#tFrom").value = ymd(from); $("#tTo").value = ymd(today); loadTokens();
+      });
+
+      // ------------------------------------------------------------ limits
+      let limitsData = null, limTarget = null;
+      const numOrNull = (v) => (String(v).trim() === "" ? null : Math.max(0, Math.round(+v)));
+      const showLim = (v) => (v == null ? "" : String(v));
+      async function loadLimits() {
+        limitsData = await api("/admin/limits");
+        const ed = limitsData.can_edit, dis = ed ? "" : "disabled";
+        $("#gMonth").value = showLim(limitsData.global.monthly_token_limit); $("#gDay").value = showLim(limitsData.global.daily_token_limit);
+        ["#gMonth", "#gDay", "#gSave"].forEach((x) => { $(x).disabled = !ed; });
+        const rb = $("#lRoles"); rb.innerHTML = "";
+        limitsData.roles.forEach((r) => {
+          const tr = el("tr");
+          tr.innerHTML = `<td><strong>${esc(roleName(r.name))}</strong></td>`
+            + [["daily_query_limit", r.daily_query_limit], ["daily_token_limit", r.daily_token_limit], ["monthly_token_limit", r.monthly_token_limit]]
+              .map(([k, v]) => `<td><input class="limin" type="number" min="0" data-k="${k}" value="${showLim(v)}" placeholder="sin límite" ${dis}></td>`).join("")
+            + `<td class="acts">${ed ? '<button class="btn" type="button">Guardar</button>' : ""}</td>`;
+          tr.querySelector(".btn")?.addEventListener("click", async () => {
+            const body = {}; tr.querySelectorAll("input").forEach((i) => { body[i.dataset.k] = numOrNull(i.value) || 0; });
+            try { await api(`/admin/limits/roles/${r.id}`, { method: "PATCH", body }); toast(`Límites del rol ${r.name} guardados`); } catch (ex) { alert(ex.message); }
+          });
+          rb.appendChild(tr);
+        });
+        renderLimitUsers();
+      }
+      function renderLimitUsers() {
+        const ed = limitsData.can_edit, dis = ed ? "" : "disabled", qv = $("#lSearch").value.trim().toLowerCase();
+        const roleById = new Map(limitsData.roles.map((r) => [r.id, r]));
+        const ub = $("#lUsers"); ub.innerHTML = "";
+        limitsData.users.filter((u) => !qv || u.username.includes(qv) || (u.full_name || "").toLowerCase().includes(qv)).forEach((u) => {
+          const r = roleById.get(u.role_id) || {};
+          const ph = (k) => r[k] ? `rol: ${n(r[k])}` : "rol: sin límite";
+          const tr = el("tr");
+          tr.innerHTML = `<td><strong>${esc(u.username)}</strong><span class="sub">${esc(u.full_name || "")} · ${esc(roleName(u.role))}${u.is_active ? "" : " · inactivo"}</span></td>`
+            + ["daily_query_limit", "daily_token_limit", "monthly_token_limit"].map((k) => `<td><input class="limin" type="number" min="0" data-k="${k}" value="${showLim(u[k])}" placeholder="${ph(k)}" ${dis}></td>`).join("")
+            + `<td class="acts">${ed ? '<button class="btn" type="button">Guardar</button>' : ""}</td>`;
+          tr.querySelector(".btn")?.addEventListener("click", async () => {
+            const body = {}; tr.querySelectorAll("input").forEach((i) => { body[i.dataset.k] = numOrNull(i.value); });
+            try { await api(`/admin/limits/users/${u.id}`, { method: "PATCH", body }); Object.assign(u, body); toast(`Límites de ${u.username} guardados`); } catch (ex) { alert(ex.message); }
+          });
+          ub.appendChild(tr);
+        });
+      }
+      $("#lSearch").addEventListener("input", () => limitsData && renderLimitUsers());
+      $("#gSave").addEventListener("click", async () => {
+        try { await api("/admin/limits", { method: "PUT", body: { monthly_token_limit: numOrNull($("#gMonth").value), daily_token_limit: numOrNull($("#gDay").value) } }); toast("Límite global guardado"); } catch (ex) { alert(ex.message); }
+      });
+      async function openLimits(uid, uname) {
+        if (!limitsData) limitsData = await api("/admin/limits");
+        const u = limitsData.users.find((x) => x.id === uid) || {};
+        limTarget = u; $("#limTitle").textContent = `Límites de ${uname}`;
+        $("#limQ").value = showLim(u.daily_query_limit); $("#limD").value = showLim(u.daily_token_limit); $("#limM").value = showLim(u.monthly_token_limit);
+        $("#limErr").hidden = true; $("#limDlg").showModal();
+      }
+      $("#limForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const body = { daily_query_limit: numOrNull($("#limQ").value), daily_token_limit: numOrNull($("#limD").value), monthly_token_limit: numOrNull($("#limM").value) };
+        try { await api(`/admin/limits/users/${limTarget.id}`, { method: "PATCH", body }); Object.assign(limTarget, body); $("#limDlg").close(); toast("Límites guardados"); loadTokens(); }
+        catch (ex) { $("#limErr").textContent = ex.message; $("#limErr").hidden = false; }
+      });
+
+      // ------------------------------------------------------------ knowledge bases
+      let kbData = null, kbEditing = null;
+      const SCOPE = { global: ["General", "global"], role: ["Rol", "role"], user: ["Personal", "user"] };
+      const JOB = { running: ["Indexando", "warn"], queued: ["En cola", "warn"], done: ["Al día", "ok"], idle: ["Al día", "ok"], aborted: ["Interrumpida", "bad"], error: ["Error", "bad"], skipped: ["Otro proceso indexa", "warn"] };
+      const fmtSize = (b) => b >= 1073741824 ? (b / 1073741824).toFixed(1) + " GB" : b >= 1048576 ? (b / 1048576).toFixed(1) + " MB" : b > 0 ? Math.max(1, Math.round(b / 1024)) + " KB" : "0 KB";
+      const roleNameById = (id) => { const r = (kbData ? kbData.roles : roles).find((x) => x.id === id); return r ? roleName(r.name) : `#${id}`; };
+      function access(k) {
+        if (k.scope === "user") return `Solo <strong>${esc(k.owner_username)}</strong>`;
+        if (k.scope === "role") return `Miembros de <strong>${esc(roleName(k.role_name))}</strong>`;
+        const rd = k.read_roles.length ? k.read_roles.map(roleNameById).join(", ") : "todos los roles";
+        const wr = k.write_roles.length ? k.write_roles.map(roleNameById).join(", ") : "solo administración";
+        return `Consulta: ${esc(rd)}<span class="sub">Agregan archivos: ${esc(wr)}</span>`;
+      }
+      let kbTimer = null;
+      async function loadKbs() {
+        clearTimeout(kbTimer);
+        kbData = await api("/admin/kb");
+        $("#kbRoot").textContent = kbData.kb_dir;
+        renderKbs();
+        if (kbData.items.some((k) => ["running", "queued"].includes(((k.status || {}).job || {}).state)) && !$("#t-kb").hidden) kbTimer = setTimeout(loadKbs, 3000);
+      }
+      function renderKbs() {
+        const sc = $("#kbScope").value, qv = $("#kbQ").value.trim().toLowerCase();
+        const tb = $("#kbRows"); tb.innerHTML = "";
+        const items = kbData.items.filter((k) => (!sc || k.scope === sc) && (!qv || `${k.name} ${k.slug} ${k.owner_username} ${k.role_name}`.toLowerCase().includes(qv)));
+        if (!items.length) tb.innerHTML = `<tr><td colspan="9" class="empty">Sin bases con esos filtros.</td></tr>`;
+        items.forEach((k) => {
+          const st = k.status || {}, job = st.job || {};
+          const [jl, jc] = !k.is_active ? ["Inactiva", "off"] : JOB[job.state] || ["Al día", "ok"];
+          const [sl, scls] = k.is_default ? ["Principal", "global"] : SCOPE[k.scope] || [k.scope, "global"];
+          const tr = el("tr");
+          tr.innerHTML = `<td title="${esc(k.description || "")}"><strong>${esc(k.name)}</strong><span class="sub"><code>${esc(k.slug)}</code></span></td>
+            <td><span class="scope ${scls}">${sl}</span></td><td>${access(k)}</td>
+            <td class="num">${n(st.files)}</td><td class="num hide-sm">${n(st.chunks)}</td>
+            <td class="num hide-sm" style="white-space:nowrap">${fmtSize(k.disk_bytes || 0)}${k.quota_bytes ? `<span class="sub">de ${fmtSize(k.quota_bytes)}</span>` : ""}</td>
+            <td class="hide-sm" style="white-space:nowrap">${st.indexed_at ? fmtDate(st.indexed_at) : "—"}</td>
+            <td><span class="pill ${jc}" title="${esc(job.error || st.warning || "")}">${jl}</span></td><td class="acts"></td>`;
+          const acts = tr.querySelector(".acts");
+          const bf = el("button", "ghost", "Archivos"); bf.type = "button"; bf.addEventListener("click", () => { filesSlug = k.slug; showTab("files"); }); acts.appendChild(bf);
+          const be = el("button", "ghost", "Editar"); be.type = "button"; be.addEventListener("click", () => openKb(k)); acts.appendChild(be);
+          const br = el("button", "ghost", "Reindexar"); br.type = "button";
+          br.addEventListener("click", async () => { try { const r = await api(`/kb/${encodeURIComponent(k.slug)}/reindex`, { method: "POST", body: { mode: "update" } }); toast(r.started ? "Indexación iniciada" : "En cola"); loadKbs(); } catch (ex) { alert(ex.message); } });
+          acts.appendChild(br);
+          if (k.scope === "global" && !k.is_default) {
+            const bd = el("button", "ghost danger", "Eliminar"); bd.type = "button";
+            bd.addEventListener("click", async () => {
+              if (!confirm(`¿Eliminar la base «${k.name}»? Se borra su índice.`)) return;
+              const files = !k.custom_dir && confirm("¿Borrar también sus archivos del disco? (Cancelar = conservarlos)");
+              try { await api(`/admin/kb/${k.id}?` + qs({ delete_files: files ? "true" : "" }), { method: "DELETE" }); toast("Base eliminada"); loadKbs(); } catch (ex) { alert(ex.message); }
+            });
+            acts.appendChild(bd);
+          }
+          tb.appendChild(tr);
+        });
+      }
+      $("#kbScope").addEventListener("change", () => kbData && renderKbs());
+      $("#kbQ").addEventListener("input", () => kbData && renderKbs());
+      function roleChecks(box, selected) {
+        const rs = kbData ? kbData.roles : roles;
+        box.innerHTML = rs.map((r) => `<label><input type="checkbox" value="${r.id}" ${selected.includes(r.id) ? "checked" : ""}>${esc(roleName(r.name))}</label>`).join("");
+      }
+      const checkedIds = (box) => [...box.querySelectorAll("input:checked")].map((i) => +i.value);
+      function openKb(k) {
+        kbEditing = k || null;
+        const isGlobal = !k || k.scope === "global";
+        $("#kbTitle").textContent = k ? `Editar ${k.name}` : "Nueva base de conocimientos";
+        $("#kbName").value = k ? k.name : ""; $("#kbDesc").value = k ? k.description : ""; $("#kbSlug").value = ""; $("#kbDir").value = "";
+        $("#kbSlugRow").hidden = !!k; $("#kbDirRow").hidden = !!k;
+        $("#kbReadRow").hidden = !isGlobal || (k && k.is_default && false); $("#kbWriteRow").hidden = !isGlobal;
+        roleChecks($("#kbRead"), k ? k.read_roles : []); roleChecks($("#kbWrite"), k ? k.write_roles : []);
+        $("#kbSel").checked = k ? k.selected_by_default : true;
+        $("#kbActiveRow").hidden = !k || k.is_default; $("#kbActive").checked = k ? k.is_active : true;
+        $("#kbErr").hidden = true; $("#kbDlg").showModal();
+      }
+      $("#kbNew").addEventListener("click", () => openKb(null));
+      $("#kbForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const k = kbEditing, isGlobal = !k || k.scope === "global";
+        const body = { name: $("#kbName").value.trim(), description: $("#kbDesc").value.trim(), selected_by_default: $("#kbSel").checked };
+        if (isGlobal) { body.read_roles = checkedIds($("#kbRead")); body.write_roles = checkedIds($("#kbWrite")); }
+        try {
+          if (k) { if (!k.is_default) body.is_active = $("#kbActive").checked; await api(`/admin/kb/${k.id}`, { method: "PATCH", body }); toast("Base actualizada"); }
+          else { body.slug = $("#kbSlug").value.trim(); body.data_dir = $("#kbDir").value.trim(); const r = await api("/admin/kb", { method: "POST", body }); toast(`Base ${r.slug} creada`); filesSlug = r.slug; }
+          $("#kbDlg").close(); loadKbs();
+        } catch (ex) { $("#kbErr").textContent = ex.message; $("#kbErr").hidden = false; }
+      });
+
+      // ------------------------------------------------------------ files of a base
+      let filesSlug = null, fTimer = null;
+      const FST = { indexed: ["Indexado", "ok"], pending: ["Pendiente", "warn"], ignored: ["No se indexa", "off"], unsupported: ["No soportado", "off"] };
+      async function loadFiles() {
+        clearTimeout(fTimer);
+        if (!kbData) kbData = await api("/admin/kb");
+        const sel = $("#fKb");
+        sel.innerHTML = kbData.items.map((k) => `<option value="${esc(k.slug)}">${esc(k.name)} · ${(k.is_default ? ["Principal"] : SCOPE[k.scope] || [k.scope])[0]}${k.owner_username ? " (" + esc(k.owner_username) + ")" : ""}</option>`).join("");
+        if (filesSlug && kbData.items.some((k) => k.slug === filesSlug)) sel.value = filesSlug;
+        filesSlug = sel.value;
+        $("#fHint").textContent = `${kbData.upload_exts.join(" ")} · máx. ${kbData.max_upload_mb} MB por archivo · las imágenes van a drawings/ · los CSV / Excel de productos en productos/`;
+        $("#fGraph").href = "/graph?" + qs({ kb: filesSlug });
+        let d;
+        try { d = await api(`/kb/${encodeURIComponent(filesSlug)}/files`); } catch (ex) { fMsg(esc(ex.message), false); return; }
+        const st = d.status, job = st.job || {};
+        const [jl] = JOB[job.state] || ["Al día"];
+        $("#fKpis").innerHTML = [["Archivos", n(d.items.length)], ["Indexados", n(st.files)], ["Fragmentos", n(st.chunks)], ["Espacio", fmtSize(d.total_bytes) + (d.quota_bytes ? " de " + fmtSize(d.quota_bytes) : "")],
+        ["Índice", jl], ["Embeddings pagados", n((st.embedding_totals || {}).api_texts)]].map(([k, v]) => `<div class="card kpi"><span>${k}</span><strong style="font-size:18px">${v}</strong></div>`).join("");
+        const tb = $("#fRows"); tb.innerHTML = "";
+        if (!d.items.length) tb.innerHTML = `<tr><td colspan="5" class="empty">Esta base no tiene archivos todavía.</td></tr>`;
+        d.items.forEach((f) => {
+          const [sl, sc] = FST[f.status] || [f.status, "off"];
+          const name = f.status === "indexed" ? `<a href="/files/${f.rel.split("/").map(encodeURIComponent).join("/")}" target="_blank" rel="noopener">${esc(f.path)}</a>` : esc(f.path);
+          const tr = el("tr");
+          tr.innerHTML = `<td>${name}${f.title && f.title !== f.name ? `<span class="sub">${esc(f.title)}</span>` : ""}</td><td class="num">${fmtSize(f.size)}</td>
+            <td class="hide-sm">${fmtDate(f.modified)}</td><td><span class="pill ${sc}">${sl}</span></td><td class="acts"></td>`;
+          const del = el("button", "ghost danger", "Eliminar"); del.type = "button";
+          del.addEventListener("click", async () => {
+            if (!confirm(`¿Eliminar «${f.path}»?`)) return;
+            try { await api(`/kb/${encodeURIComponent(filesSlug)}/files/${f.path.split("/").map(encodeURIComponent).join("/")}`, { method: "DELETE" }); toast("Archivo eliminado"); loadFiles(); } catch (ex) { alert(ex.message); }
+          });
+          tr.querySelector(".acts").appendChild(del);
+          tb.appendChild(tr);
+        });
+        if (["running", "queued"].includes(job.state) && !$("#t-files").hidden) fTimer = setTimeout(loadFiles, 2000);
+      }
+      function fMsg(html, ok) { const m = $("#fMsg"); m.className = "msgbox " + (ok ? "okbox" : "formerr"); m.innerHTML = html; m.hidden = !html; }
+      async function fUpload(list) {
+        if (!list.length) return;
+        const fd = new FormData();
+        [...list].forEach((f) => fd.append("files", f, f.name));
+        fd.append("subdir", $("#fSub").value.trim());
+        fMsg(`Subiendo ${list.length} archivo${list.length === 1 ? "" : "s"}…`, true);
+        try {
+          const r = await fetch(`/kb/${encodeURIComponent(filesSlug)}/files`, { method: "POST", body: fd, credentials: "same-origin" });
+          const d = await r.json().catch(() => ({}));
+          if (!r.ok) throw new Error(typeof d.detail === "string" ? d.detail : `Error ${r.status}`);
+          fMsg((d.saved.length ? `${d.saved.length} guardado${d.saved.length === 1 ? "" : "s"}; indexando en segundo plano.` : "")
+            + d.rejected.map((x) => `<div>${esc(x.name)}: ${esc(x.reason)}</div>`).join(""), !d.rejected.length);
+        } catch (ex) { fMsg(esc(ex.message), false); }
+        $("#fInput").value = ""; loadFiles();
+      }
+      $("#fKb").addEventListener("change", (e) => { filesSlug = e.target.value; fMsg("", true); $("#fReportOut").hidden = true; loadFiles(); });
+      $("#fInput").addEventListener("change", (e) => fUpload(e.target.files));
+      const fDrop = $("#fDrop");
+      ["dragenter", "dragover"].forEach((t) => fDrop.addEventListener(t, (e) => { e.preventDefault(); fDrop.classList.add("over"); }));
+      ["dragleave", "drop"].forEach((t) => fDrop.addEventListener(t, (e) => { e.preventDefault(); fDrop.classList.remove("over"); }));
+      fDrop.addEventListener("drop", (e) => fUpload(e.dataTransfer.files));
+      async function fReindex(mode) {
+        if (mode === "rebuild" && !confirm("Reconstruir vuelve a procesar todos los archivos de esta base (los vectores pagados se reutilizan). ¿Continuar?")) return;
+        try { const r = await api(`/kb/${encodeURIComponent(filesSlug)}/reindex`, { method: "POST", body: { mode } }); toast(r.started ? "Indexación iniciada" : "En cola"); loadFiles(); } catch (ex) { alert(ex.message); }
+      }
+      $("#fUpdate").addEventListener("click", () => fReindex("update"));
+      $("#fRebuild").addEventListener("click", () => fReindex("rebuild"));
+      $("#fReport").addEventListener("click", async () => {
+        const out = $("#fReportOut");
+        try { out.textContent = JSON.stringify(await api("/admin/data-report?" + qs({ kb: filesSlug })), null, 2); } catch (ex) { out.textContent = ex.message; }
+        out.hidden = false;
+      });
+
+      // ------------------------------------------------------------ prompts per role
+      let pData = null;
+      async function loadPrompts() {
+        pData = await api("/admin/prompts");
+        const db = $("#pDefaults"); db.innerHTML = "";
+        pData.roles.forEach((r) => {
+          const tr = el("tr");
+          const opts = `<option value="">Ninguno (asistente estándar)</option>` + pData.items.filter((p) => p.is_active && (!p.role_ids.length || p.role_ids.includes(r.id)))
+            .map((p) => `<option value="${p.id}" ${p.id === r.default_prompt_id ? "selected" : ""}>${esc(p.name)}</option>`).join("");
+          tr.innerHTML = `<td><strong>${esc(roleName(r.name))}</strong></td><td><select class="limin" style="width:min(320px,100%)">${opts}</select></td>`;
+          tr.querySelector("select").addEventListener("change", async (e) => {
+            try { await api("/admin/prompts/role-default", { method: "PUT", body: { role_id: r.id, prompt_id: e.target.value ? +e.target.value : null } }); toast(`Prompt de ${r.name} actualizado`); } catch (ex) { alert(ex.message); }
+          });
+          db.appendChild(tr);
+        });
+        const box = $("#pCards"); box.innerHTML = "";
+        pData.items.forEach((p) => {
+          const c = el("div", "card rolecard");
+          const users = pData.roles.filter((r) => r.default_prompt_id === p.id).map((r) => roleName(r.name));
+          c.innerHTML = `<header><h3>${esc(p.name)}</h3>${p.is_active ? "" : '<span class="pill off">inactivo</span>'}${users.length ? `<span class="pill role">predeterminado: ${esc(users.join(", "))}</span>` : ""}</header>
+            <label class="fld"><span>Nombre</span><input class="desc" data-f="name" value="${esc(p.name)}" maxlength="120"></label>
+            <label class="fld"><span>Descripción</span><input class="desc" data-f="description" value="${esc(p.description)}" maxlength="300"></label>
+            <label class="fld"><span>Instrucciones</span><textarea class="instr" data-f="instructions" maxlength="8000">${esc(p.instructions)}</textarea></label>
+            <div class="fld"><span>Roles (ninguno = todos)</span><div class="rolechecks"></div></div>
+            <label class="check"><input type="checkbox" data-f="is_active" ${p.is_active ? "checked" : ""}> Activo</label>
+            <div class="foot"><span class="saved" hidden>Guardado</span><button class="ghost danger" type="button" data-del>Eliminar</button><button class="btn" type="button" data-save>Guardar</button></div>`;
+          c.querySelector(".rolechecks").innerHTML = pData.roles.map((r) => `<label><input type="checkbox" value="${r.id}" ${p.role_ids.includes(r.id) ? "checked" : ""}>${esc(roleName(r.name))}</label>`).join("");
+          c.querySelector("[data-save]").addEventListener("click", async () => {
+            const body = { name: c.querySelector('[data-f="name"]').value, description: c.querySelector('[data-f="description"]').value,
+              instructions: c.querySelector('[data-f="instructions"]').value, is_active: c.querySelector('[data-f="is_active"]').checked,
+              role_ids: checkedIds(c.querySelector(".rolechecks")) };
+            try { await api(`/admin/prompts/${p.id}`, { method: "PATCH", body }); const sv = c.querySelector(".saved"); sv.hidden = false; setTimeout(() => { sv.hidden = true; }, 2000); } catch (ex) { alert(ex.message); }
+          });
+          c.querySelector("[data-del]").addEventListener("click", async () => {
+            if (!confirm(`¿Eliminar el prompt «${p.name}»?`)) return;
+            try { await api(`/admin/prompts/${p.id}`, { method: "DELETE" }); loadPrompts(); } catch (ex) { alert(ex.message); }
+          });
+          box.appendChild(c);
+        });
+      }
+      $("#pNew").addEventListener("click", () => {
+        $("#pForm").reset(); $("#pErr").hidden = true;
+        $("#pRoles").innerHTML = (pData ? pData.roles : roles).map((r) => `<label><input type="checkbox" value="${r.id}">${esc(roleName(r.name))}</label>`).join("");
+        $("#pDlg").showModal();
+      });
+      $("#pForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        try {
+          await api("/admin/prompts", { method: "POST", body: { name: $("#pName").value.trim(), description: $("#pDesc").value.trim(), instructions: $("#pInstr").value.trim(), role_ids: checkedIds($("#pRoles")) } });
+          $("#pDlg").close(); toast("Prompt creado"); loadPrompts();
+        } catch (ex) { $("#pErr").textContent = ex.message; $("#pErr").hidden = false; }
+      });
+
+      // ------------------------------------------------------------ start
+      const LOAD = { users: loadUsers, roles: loadRoles, convs: () => loadConvs(0), usage: loadUsage, audit: () => loadAudit(0), index: loadIndex,
+        tokens: loadTokens, limits: loadLimits, kb: loadKbs, files: loadFiles, prompts: loadPrompts };
+      function fillUserSelects() {
+        ["#cUser", "#aUser"].forEach((s) => {
+          const sel = $(s), cur = sel.value;
+          sel.innerHTML = `<option value="">Todos los usuarios</option>` + users.map((u) => `<option value="${u.id}">${esc(u.full_name ? `${u.full_name} (${u.username})` : u.username)}${u.is_active ? "" : " · inactivo"}</option>`).join("");
+          sel.value = cur;
+        });
+      }
+      async function boot() {
+        me = await api("/auth/me");
+        try { const t = me.user.preferences.theme; if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme; } catch (_) { }
+        $("#who").textContent = `${me.user.full_name || me.user.username} · ${ROLE_LABEL[me.user.role] || me.user.role}`;
+        visibleTabs = TABS.filter(([, , ok]) => ok()).map(([id]) => id);
+        const visible = TABS.filter(([id]) => visibleTabs.includes(id));
+        if (!visible.length) { $("#denied").hidden = false; return; }
+        const gnav = $("#groups");
+        GROUPS.forEach(([gid, label, tabs]) => {
+          const first = tabs.find((t) => visibleTabs.includes(t));
+          if (!first) return;
+          const b = el("button", null, esc(label)); b.type = "button"; b.dataset.group = gid;
+          b.addEventListener("click", () => showTab(first)); gnav.appendChild(b);
+        });
+        // last 30 days by default
+        const today = new Date(), from = new Date(Date.now() - 29 * 86400000);
+        const d = (x) => `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, "0")}-${String(x.getDate()).padStart(2, "0")}`;
+        $("#sFrom").value = d(from); $("#sTo").value = d(today);
+        $("#tFrom").value = d(from); $("#tTo").value = d(today);
+        if (can("users.manage")) roles = (await api("/admin/roles")).items;
+        else if (can("kb.manage")) roles = (await api("/admin/kb")).roles;
+        else if (can("prompts.manage")) roles = (await api("/admin/prompts")).roles;
+        if (["users.manage", "conversations.read_all", "reports.read"].some(can)) { users = (await api("/admin/user-options")).items; fillUserSelects(); }
+        const want = location.hash.slice(1);
+        showTab(visible.some(([id]) => id === want) ? want : visible[0][0]);
+      }
+      addEventListener("hashchange", () => {
+        const want = location.hash.slice(1);
+        if (visibleTabs.includes(want) && $("#t-" + want).hidden) showTab(want);
+      });
+      boot().catch((e) => { if (e.message !== "401") { $("#denied").hidden = false; $("#denied").textContent = e.message; } });
+    })();
+  </script>
+</body>
+
+</html>

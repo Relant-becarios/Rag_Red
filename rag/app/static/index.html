@@ -1,0 +1,2048 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+  <meta name="relant-build" content="2026-10-19b excel+hojas">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Relant · Asistente técnico</title>
+  <script>
+    /* theme before first paint (saved per user; this copy only avoids a flash) */
+    try { const t = localStorage.getItem("relant.theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch (_) { }
+  </script>
+  <style>
+    /* Layout: header / scrolling thread / composer, centred 880px column; documents drawer on the right. */
+    :root {
+      --bg: #f4f6f8;
+      --surface: #ffffff;
+      --ink: #17202b;
+      --muted: #5a6676;
+      --line: #d6dde5;
+      --accent: #1f6a86;
+      --accent-ink: #ffffff;
+      --accent-soft: #e3eff4;
+      --paid: #a86410;
+      --paid-soft: #fbecd5;
+      --local: #2a7565;
+      --local-soft: #d9efe9;
+      --danger: #a3332a;
+      --danger-soft: #f8e1de;
+      --user: #17202b;
+      --user-ink: #ffffff;
+      --code-bg: #eef2f6;
+      --f-body: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+      --f-mono: "Cascadia Mono", Consolas, "SFMono-Regular", Menlo, monospace;
+      color-scheme: light;
+    }
+
+    @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+        --bg: #0f141a;
+        --surface: #161d25;
+        --ink: #e3e8ee;
+        --muted: #9aa6b4;
+        --line: #2a3440;
+        --accent: #5fb0cf;
+        --accent-ink: #0f141a;
+        --accent-soft: #17303b;
+        --paid: #e3a552;
+        --paid-soft: #3a2b16;
+        --local: #6fc5b0;
+        --local-soft: #173129;
+        --danger: #f08a80;
+        --danger-soft: #3b1d1a;
+        --user: #2b3846;
+        --user-ink: #e3e8ee;
+        --code-bg: #1d2630;
+        color-scheme: dark;
+      }
+  }
+  :root[data-theme="dark"] {
+        --bg: #0f141a;
+        --surface: #161d25;
+        --ink: #e3e8ee;
+        --muted: #9aa6b4;
+        --line: #2a3440;
+        --accent: #5fb0cf;
+        --accent-ink: #0f141a;
+        --accent-soft: #17303b;
+        --paid: #e3a552;
+        --paid-soft: #3a2b16;
+        --local: #6fc5b0;
+        --local-soft: #173129;
+        --danger: #f08a80;
+        --danger-soft: #3b1d1a;
+        --user: #2b3846;
+        --user-ink: #e3e8ee;
+        --code-bg: #1d2630;
+        color-scheme: dark;
+      }
+
+
+    * {
+      box-sizing: border-box;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+
+    html,
+    body {
+      height: 100%;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--f-body);
+      font-size: 15px;
+      line-height: 1.55;
+      display: flex;
+      flex-direction: column;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+      color: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    code,
+    pre {
+      font-family: var(--f-mono);
+      font-size: 0.88em;
+    }
+
+    /* ---------- header ---------- */
+    header.top {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 10px 20px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-right: auto;
+    }
+
+    .mark {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      background: var(--accent);
+      color: var(--accent-ink);
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+      font-size: 17px;
+    }
+
+    .brand strong {
+      display: block;
+      font-size: 15px;
+      line-height: 1.2;
+    }
+
+    .brand span {
+      display: block;
+      font-size: 12.5px;
+      color: var(--muted);
+      line-height: 1.2;
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--muted);
+      flex: none;
+    }
+
+    .dot.ok {
+      background: var(--local);
+    }
+
+    .dot.busy {
+      background: var(--paid);
+      animation: pulse 1.2s infinite;
+    }
+
+    .dot.bad {
+      background: var(--danger);
+    }
+
+    @keyframes pulse {
+      50% {
+        opacity: 0.35;
+      }
+    }
+
+    .ghost {
+      border: 1px solid var(--line);
+      background: transparent;
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 13.5px;
+    }
+
+    .ghost:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .banner {
+      margin: 12px auto 0;
+      width: min(880px, calc(100% - 32px));
+      background: var(--paid-soft);
+      border: 1px solid var(--paid);
+      color: var(--ink);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 14px;
+    }
+
+    .banner code {
+      background: transparent;
+      font-weight: 600;
+      overflow-wrap: anywhere;
+    }
+
+    /* ---------- thread ---------- */
+    main.thread {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 16px 8px;
+    }
+
+    .col {
+      width: min(880px, 100%);
+      margin: 0 auto;
+      display: grid;
+      gap: 18px;
+    }
+
+    .empty {
+      padding: 7vh 0 2vh;
+      display: grid;
+      gap: 12px;
+    }
+
+    .empty h1 {
+      margin: 0;
+      font-size: 26px;
+      line-height: 1.2;
+    }
+
+    .empty p {
+      margin: 0;
+      color: var(--muted);
+      max-width: 62ch;
+    }
+
+    .examples {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    .examples button {
+      border: 1px solid var(--line);
+      background: var(--surface);
+      border-radius: 999px;
+      padding: 7px 14px;
+      font-size: 13.5px;
+      text-align: left;
+    }
+
+    .examples button:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .msg-user {
+      justify-self: end;
+      max-width: 78%;
+      background: var(--user);
+      color: var(--user-ink);
+      padding: 10px 14px;
+      border-radius: 14px 14px 4px 14px;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .msg-user .tag {
+      display: block;
+      font-size: 11.5px;
+      opacity: 0.75;
+      margin-bottom: 2px;
+    }
+
+    .msg-bot {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 4px 14px 14px 14px;
+      padding: 14px 16px;
+      display: grid;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .msg-bot.clarify {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    .msg-bot.error {
+      border-color: var(--danger);
+      background: var(--danger-soft);
+    }
+
+    .answer {
+      overflow-wrap: anywhere;
+      min-width: 0;
+    }
+
+    .answer> :first-child {
+      margin-top: 0;
+    }
+
+    .answer> :last-child {
+      margin-bottom: 0;
+    }
+
+    .answer p,
+    .answer ul,
+    .answer ol {
+      margin: 0 0 0.7em;
+    }
+
+    .answer ul,
+    .answer ol {
+      padding-left: 1.4em;
+    }
+
+    .answer li {
+      margin: 0.15em 0;
+    }
+
+    .answer h3,
+    .answer h4 {
+      margin: 0.9em 0 0.4em;
+      font-size: 15.5px;
+    }
+
+    .answer :not(pre)>code {
+      background: var(--code-bg);
+      padding: 0.05em 0.35em;
+      border-radius: 4px;
+    }
+
+    .answer pre {
+      background: var(--code-bg);
+      padding: 10px 12px;
+      border-radius: 8px;
+      overflow-x: auto;
+    }
+
+    .answer .tablewrap {
+      overflow-x: auto;
+      margin: 0 0 0.7em;
+    }
+
+    .answer table {
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    .answer th,
+    .answer td {
+      border: 1px solid var(--line);
+      padding: 5px 9px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .answer th {
+      background: var(--bg);
+    }
+
+    .answer a {
+      color: var(--accent);
+    }
+
+    a.cite {
+      display: inline-grid;
+      place-items: center;
+      min-width: 1.45em;
+      height: 1.45em;
+      padding: 0 0.3em;
+      margin: 0 1px;
+      border-radius: 6px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 0.75em;
+      font-weight: 600;
+      text-decoration: none;
+      vertical-align: 0.15em;
+    }
+
+    a.cite:hover {
+      background: var(--accent);
+      color: var(--accent-ink);
+    }
+
+    .dl-busy { opacity: .6; pointer-events: none; cursor: progress; }
+    .dl-err { color: #b42318; font-size: .92em; }
+    .rawcite {
+      font-size: 0.78em;
+      color: var(--muted);
+      font-family: var(--f-mono);
+    }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 10px;
+      align-items: center;
+      font-size: 12.5px;
+      color: var(--muted);
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      border-radius: 999px;
+      padding: 2px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid currentColor;
+      white-space: nowrap;
+    }
+
+    .chip.fast {
+      color: var(--local);
+      background: var(--local-soft);
+    }
+
+    .chip.agent {
+      color: var(--paid);
+      background: var(--paid-soft);
+    }
+
+    .chip.clar {
+      color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    .block-title {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .sources {
+      display: grid;
+      gap: 4px;
+    }
+
+    .src {
+      display: grid;
+      grid-template-columns: auto auto minmax(0, 1fr);
+      gap: 8px;
+      align-items: baseline;
+      font-size: 13.5px;
+      text-decoration: none;
+      color: var(--ink);
+      padding: 3px 6px;
+      border-radius: 6px;
+    }
+
+    a.src:hover {
+      background: var(--bg);
+    }
+
+    .src .n {
+      font-weight: 700;
+      color: var(--accent);
+      font-size: 12px;
+      min-width: 1.4em;
+    }
+
+    .src .kind {
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--muted);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 0 5px;
+    }
+
+    .src .name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .src .name small {
+      color: var(--muted);
+    }
+
+    details.more summary {
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .drawings {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+      gap: 10px;
+    }
+
+    .drawings a {
+      display: grid;
+      gap: 4px;
+      text-decoration: none;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .drawings img {
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      object-fit: contain;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    .drawings span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    details.steps summary {
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    details.steps pre {
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      background: var(--code-bg);
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      max-height: 360px;
+      overflow-y: auto;
+    }
+
+    .thinking {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .dots {
+      display: inline-flex;
+      gap: 4px;
+    }
+
+    .dots i {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: blink 1.2s infinite;
+    }
+
+    .dots i:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .dots i:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
+    @keyframes blink {
+
+      0%,
+      80%,
+      100% {
+        opacity: 0.25;
+      }
+
+      40% {
+        opacity: 1;
+      }
+    }
+
+    /* ---------- composer ---------- */
+    form.composer {
+      padding: 10px 16px 14px;
+      background: linear-gradient(to top, var(--bg) 70%, transparent);
+    }
+
+    .composer .inner {
+      width: min(880px, 100%);
+      margin: 0 auto;
+      display: grid;
+      gap: 6px;
+    }
+
+    .field {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 8px 8px 8px 14px;
+    }
+
+    .field:focus-within {
+      border-color: var(--accent);
+    }
+
+    textarea#q {
+      flex: 1;
+      border: 0;
+      background: transparent;
+      resize: none;
+      outline: none;
+      max-height: 180px;
+      padding: 6px 0;
+      min-width: 0;
+    }
+
+    button#send {
+      border: 0;
+      background: var(--accent);
+      color: var(--accent-ink);
+      border-radius: 10px;
+      padding: 8px 16px;
+      font-weight: 600;
+    }
+
+    button#send:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+
+    .opts {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 18px;
+      font-size: 13px;
+      color: var(--muted);
+      align-items: center;
+    }
+
+    .opts label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+
+    .opts .hint {
+      margin-left: auto;
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* ---------- documents drawer ---------- */
+    .scrim {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 20, 26, 0.35);
+    }
+
+    .drawer {
+      position: fixed;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: min(460px, 100%);
+      background: var(--surface);
+      border-left: 1px solid var(--line);
+      display: flex;
+      flex-direction: column;
+      box-shadow: -8px 0 24px rgba(0, 0, 0, 0.12);
+    }
+
+    .drawer header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .drawer header h2 {
+      margin: 0;
+      font-size: 16px;
+      margin-right: auto;
+    }
+
+    .drawer .filters {
+      display: flex;
+      gap: 8px;
+      padding: 12px 16px;
+      flex-wrap: wrap;
+    }
+
+    .drawer input,
+    .drawer select {
+      border: 1px solid var(--line);
+      background: var(--bg);
+      border-radius: 8px;
+      padding: 7px 10px;
+      font-size: 13.5px;
+    }
+
+    .drawer input {
+      flex: 1;
+      min-width: 160px;
+    }
+
+    .drawer .summary {
+      padding: 0 16px 8px;
+      font-size: 12.5px;
+      color: var(--muted);
+    }
+
+    .doclist {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0 8px 16px;
+    }
+
+    .doc {
+      display: grid;
+      gap: 2px;
+      padding: 9px 10px;
+      border-radius: 8px;
+      text-decoration: none;
+      color: var(--ink);
+    }
+
+    .doc:hover {
+      background: var(--bg);
+    }
+
+    .doc .t {
+      font-weight: 600;
+      font-size: 14px;
+      overflow-wrap: anywhere;
+    }
+
+    .doc .r {
+      font-size: 12px;
+      color: var(--muted);
+      overflow-wrap: anywhere;
+    }
+
+    .doc .c {
+      font-size: 12px;
+      color: var(--accent);
+      font-family: var(--f-mono);
+      overflow-wrap: anywhere;
+    }
+
+    @media (max-width: 560px) {
+      header.top {
+        padding: 10px 14px;
+      }
+
+      .status {
+        order: 3;
+        width: 100%;
+      }
+
+      .msg-user {
+        max-width: 92%;
+      }
+
+      .opts .hint {
+        margin-left: 0;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+
+      .dot.busy,
+      .dots i {
+        animation: none;
+      }
+    }
+  
+
+    /* ================= users, history, preferences ================= */
+    body { flex-direction: row; }
+    .app { display: flex; flex: 1; min-width: 0; height: 100%; }
+    .main { display: flex; flex-direction: column; flex: 1; min-width: 0; height: 100%; }
+    .iconbtn { border: 1px solid var(--line); background: transparent; border-radius: 8px; width: 34px; height: 34px; display: grid; place-items: center; flex: none; }
+    .iconbtn:hover { border-color: var(--accent); color: var(--accent); }
+    .iconbtn svg { width: 18px; height: 18px; }
+
+    /* ---------- sidebar ---------- */
+    aside.side { width: 280px; flex: none; background: var(--surface); border-right: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
+    .app.side-closed aside.side { display: none; }
+    .side-top { display: flex; gap: 8px; padding: 12px; align-items: center; }
+    .side-top .new { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; border: 0; background: var(--accent); color: var(--accent-ink); border-radius: 10px; padding: 8px 12px; font-weight: 600; font-size: 14px; }
+    .side-top .new svg { width: 16px; height: 16px; }
+    .side-search { padding: 0 12px 8px; }
+    .side-search input { width: 100%; border: 1px solid var(--line); background: var(--bg); border-radius: 8px; padding: 7px 10px; font-size: 13.5px; }
+    .convs { flex: 1; overflow-y: auto; padding: 0 8px 12px; }
+    .convs .grp { font-size: 11.5px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); padding: 12px 8px 4px; }
+    .conv { display: flex; align-items: center; gap: 4px; border-radius: 8px; padding: 0 4px 0 0; }
+    .conv:hover, .conv.active { background: var(--bg); }
+    .conv.active { box-shadow: inset 3px 0 0 var(--accent); }
+    .conv button.open { flex: 1; min-width: 0; text-align: left; border: 0; background: transparent; padding: 8px 6px 8px 10px; font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .conv .act { opacity: 0; border: 0; background: transparent; width: 26px; height: 26px; border-radius: 6px; color: var(--muted); display: grid; place-items: center; flex: none; }
+    .conv .act svg { width: 15px; height: 15px; }
+    .conv:hover .act, .conv.active .act, .conv .act:focus-visible { opacity: 1; }
+    .conv .act:hover { color: var(--accent); background: var(--surface); }
+    .conv .act.del:hover { color: var(--danger); }
+    .convs .none { color: var(--muted); font-size: 13px; padding: 14px 10px; }
+    .convs .moreconv { width: 100%; border: 0; background: transparent; color: var(--accent); font-size: 13px; padding: 8px; }
+
+    .me { border-top: 1px solid var(--line); padding: 10px 12px; position: relative; }
+    .me > button { width: 100%; display: flex; align-items: center; gap: 10px; border: 0; background: transparent; text-align: left; padding: 4px; border-radius: 8px; }
+    .me > button:hover { background: var(--bg); }
+    .avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; font-weight: 700; font-size: 13px; flex: none; }
+    .me .who { min-width: 0; line-height: 1.25; }
+    .me .who strong { display: block; font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .me .who span { display: block; font-size: 12px; color: var(--muted); }
+    .menu { position: absolute; left: 12px; right: 12px; bottom: calc(100% - 4px); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14); padding: 6px; display: grid; z-index: 5; }
+    .menu a, .menu button { border: 0; background: transparent; text-align: left; padding: 8px 10px; border-radius: 6px; font-size: 13.5px; color: var(--ink); text-decoration: none; }
+    .menu a:hover, .menu button:hover { background: var(--bg); }
+    .menu hr { border: 0; border-top: 1px solid var(--line); margin: 4px 0; width: 100%; }
+
+    .readonly-bar { margin: 12px auto 0; width: min(880px, calc(100% - 32px)); background: var(--accent-soft); border: 1px solid var(--accent); border-radius: 10px; padding: 8px 14px; font-size: 14px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .readonly-bar span { margin-right: auto; }
+    .msg-time { font-size: 11.5px; color: var(--muted); justify-self: end; margin-top: -12px; }
+    .quota { margin-left: auto; font-size: 12.5px; color: var(--muted); }
+
+    /* ---------- login ---------- */
+    .login { position: fixed; inset: 0; display: grid; place-items: center; padding: 16px; background: var(--bg); z-index: 20; }
+    .login form { width: min(380px, 100%); background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 26px 24px 22px; display: grid; gap: 14px; }
+    .login .brand { margin: 0 0 6px; }
+    .login h1 { margin: 0; font-size: 20px; }
+    .fld { display: grid; gap: 5px; font-size: 13.5px; }
+    .fld span { color: var(--muted); font-weight: 600; font-size: 12.5px; }
+    .fld input, .fld select { border: 1px solid var(--line); background: var(--bg); border-radius: 8px; padding: 9px 11px; font-size: 14.5px; width: 100%; }
+    .fld input:focus, .fld select:focus { border-color: var(--accent); outline: none; }
+    .btn { border: 0; background: var(--accent); color: var(--accent-ink); border-radius: 10px; padding: 10px 16px; font-weight: 600; }
+    .btn:disabled { opacity: 0.55; cursor: default; }
+    .formerr { background: var(--danger-soft); border: 1px solid var(--danger); color: var(--ink); border-radius: 8px; padding: 8px 10px; font-size: 13.5px; }
+    .formok { background: var(--local-soft); border: 1px solid var(--local); border-radius: 8px; padding: 8px 10px; font-size: 13.5px; }
+
+    /* ---------- dialogs ---------- */
+    dialog { border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--ink); padding: 0; width: min(440px, calc(100% - 32px)); }
+    dialog::backdrop { background: rgba(15, 20, 26, 0.45); }
+    dialog form { display: grid; gap: 14px; padding: 20px 22px; }
+    dialog h2 { margin: 0; font-size: 17px; }
+    dialog p.sub { margin: -6px 0 0; color: var(--muted); font-size: 13.5px; }
+    .row-end { display: flex; justify-content: flex-end; gap: 8px; }
+    .check { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; }
+    .check input { margin-top: 4px; }
+    .check small { display: block; color: var(--muted); font-size: 12.5px; }
+    .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+    .seg label { padding: 6px 12px; font-size: 13.5px; cursor: pointer; }
+    .seg input { position: absolute; opacity: 0; pointer-events: none; }
+    .seg label:has(input:checked) { background: var(--accent); color: var(--accent-ink); }
+    .seg label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+    @media (max-width: 860px) {
+      aside.side { position: fixed; inset: 0 auto 0 0; z-index: 15; width: min(300px, 86vw); box-shadow: 8px 0 24px rgba(0, 0, 0, 0.18); }
+      .app:not(.side-open) aside.side { display: none; }
+      .app.side-closed.side-open aside.side { display: flex; }
+      .sidescrim { position: fixed; inset: 0; background: rgba(15, 20, 26, 0.35); z-index: 14; }
+      .app:not(.side-open) .sidescrim { display: none; }
+    }
+    @media (min-width: 861px) { .sidescrim { display: none; } }
+    @media (max-width: 560px) {
+      header.top { gap: 10px; }
+      header.top .brand span { display: none; }
+      .readonly-bar { font-size: 13px; }
+    }
+    /* ================= multi-RAG: sources, prompt, mode, quota, files, quote ================= */
+    .anchor { position: relative; }
+    .pickbtn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 4px 11px; font-size: 12.5px; color: var(--ink); }
+    .pickbtn:hover, .pickbtn[aria-expanded="true"] { border-color: var(--accent); }
+    .pickbtn b { color: var(--accent); font-weight: 600; }
+    .pickbtn svg { width: 14px; height: 14px; color: var(--muted); }
+    .pop { position: absolute; bottom: calc(100% + 8px); left: 0; width: min(380px, calc(100vw - 32px)); background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 10px 28px rgba(0, 0, 0, 0.16); padding: 6px; z-index: 8; display: grid; gap: 1px; max-height: 60vh; overflow-y: auto; }
+    .pophead { display: flex; justify-content: space-between; align-items: center; padding: 6px 8px; font-size: 11.5px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+    .pophead button { border: 0; background: transparent; color: var(--accent); font-size: 12.5px; font-weight: 600; text-transform: none; letter-spacing: 0; }
+    .kbrow { display: flex; gap: 10px; align-items: flex-start; padding: 8px; border-radius: 8px; cursor: pointer; font-size: 13.5px; color: var(--ink); }
+    .kbrow:hover { background: var(--bg); }
+    .kbrow input { margin-top: 3px; accent-color: var(--accent); }
+    .kbrow .kn { min-width: 0; flex: 1; }
+    .kbrow small { display: block; color: var(--muted); font-size: 12px; }
+    .scope { font-size: 11px; font-weight: 600; border-radius: 999px; padding: 0 7px; border: 1px solid currentColor; margin-left: 6px; white-space: nowrap; }
+    .scope.user { color: var(--local); }
+    .scope.role { color: var(--paid); }
+    .scope.global { color: var(--accent); }
+    select.mini { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 4px 10px; font-size: 12.5px; max-width: 230px; color: var(--ink); }
+    .modeseg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; background: var(--surface); }
+    .modeseg button { border: 0; background: transparent; padding: 4px 12px; font-size: 12.5px; color: var(--muted); }
+    .modeseg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+    .quota { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+    .quota .qbar { width: 72px; height: 6px; border-radius: 99px; background: var(--line); overflow: hidden; }
+    .quota .qbar i { display: block; height: 100%; background: var(--local); }
+    .quota.warn { color: var(--paid); }
+    .quota.warn .qbar i { background: var(--paid); }
+    .quota.over { color: var(--danger); font-weight: 600; }
+    .quota.over .qbar i { background: var(--danger); }
+    .chip.quote { color: var(--accent); background: var(--accent-soft); }
+    .kbtag { font-size: 11.5px; color: var(--muted); margin-left: 6px; }
+    .kbtag::before { content: "· "; }
+
+    /* quote card */
+    .quote { display: grid; gap: 12px; }
+    .qhead { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .qhead strong { font-size: 15.5px; margin-right: auto; }
+    .qstatus { font-size: 12px; font-weight: 600; border-radius: 999px; padding: 2px 10px; border: 1px solid currentColor; }
+    .qstatus.ok { color: var(--local); background: var(--local-soft); }
+    .qstatus.review { color: var(--paid); background: var(--paid-soft); }
+    .quote table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+    .quote th, .quote td { text-align: left; padding: 7px 9px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    .quote th { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); font-weight: 600; }
+    .quote .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .quote tfoot td { border-bottom: 0; font-weight: 700; font-size: 14.5px; }
+    .lnst { font-size: 12px; font-weight: 600; white-space: nowrap; }
+    .lnst.ok { color: var(--local); }
+    .lnst.bad { color: var(--danger); }
+    .qbox { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font-size: 13.5px; display: grid; gap: 6px; }
+    .qbox h4 { margin: 0; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+    .issues { margin: 0; padding-left: 18px; display: grid; gap: 3px; }
+    .issues li.err { color: var(--danger); }
+    .issues li.warn { color: var(--paid); }
+    .qnote { font-size: 12.5px; color: var(--muted); }
+
+    /* files drawer */
+    .drop { display: block; margin: 0 16px 10px; border: 1.5px dashed var(--line); border-radius: 12px; padding: 16px; text-align: center; font-size: 13.5px; color: var(--muted); cursor: pointer; }
+    .drop.over { border-color: var(--accent); background: var(--accent-soft); color: var(--ink); }
+    .drop b { color: var(--accent); }
+    .drop small { display: block; margin-top: 4px; font-size: 12px; }
+    .drop.disabled { opacity: 0.5; pointer-events: none; }
+    .usage { margin: 0 16px 10px; font-size: 12px; color: var(--muted); display: grid; gap: 4px; }
+    .usage .ubar { height: 6px; background: var(--line); border-radius: 99px; overflow: hidden; }
+    .usage .ubar i { display: block; height: 100%; background: var(--accent); }
+    .frow { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px; }
+    .frow:hover { background: var(--bg); }
+    .frow .fn { flex: 1; min-width: 0; }
+    .frow .fn a, .frow .fn .t { font-weight: 600; font-size: 13.5px; color: var(--ink); text-decoration: none; overflow-wrap: anywhere; }
+    .frow .fn a:hover { color: var(--accent); }
+    .frow .fn small { display: block; color: var(--muted); font-size: 12px; }
+    .fst { font-size: 11.5px; font-weight: 600; border-radius: 999px; padding: 1px 8px; border: 1px solid currentColor; white-space: nowrap; }
+    .fst.indexed { color: var(--local); }
+    .fst.pending { color: var(--paid); }
+    .fst.ignored, .fst.unsupported { color: var(--muted); }
+    .frow .fdel { border: 0; background: transparent; color: var(--muted); width: 28px; height: 28px; border-radius: 6px; display: grid; place-items: center; flex: none; }
+    .frow .fdel:hover { color: var(--danger); background: var(--surface); }
+    .frow .fdel svg { width: 15px; height: 15px; }
+    .filesmsg { margin: 0 16px 10px; }
+    @media (min-width: 561px) {
+      header.top { flex-wrap: nowrap; }
+      header.top .status { min-width: 0; flex: 0 1 auto; }
+      header.top .status span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      header.top .brand { flex: none; }
+      header.top .ghost { white-space: nowrap; flex: none; }
+    }
+    @media (max-width: 560px) { .quota .qbar { display: none; } select.mini { max-width: 160px; } }
+  /* Asegura que el contenedor de la marca use todo el ancho disponible */
+  .brand {
+    display: flex;
+    justify-content: center; /* Centra el logo horizontalmente */
+    align-items: center;
+    width: 100%;
+    margin-bottom: 20px;     /* Separa el logo del título "Iniciar sesión" */
+    box-sizing: border-box;
+  }
+
+  /* Controla el tamaño de la imagen para que nunca rompa el diseño */
+  .brand-logo {
+    max-width: 100%;         /* Impide que se salga del recuadro blanco */
+    height: auto;            /* Mantiene la proporción original de la imagen */
+    max-height: 80px;        /* Ajusta este valor para controlar qué tan alto quieres el logo */
+    object-fit: contain;
+  }
+  </style>
+</head>
+
+<body>
+  <!-- ======================= login ======================= -->
+  <section class="login" id="login" hidden>
+    <form id="loginForm" autocomplete="on">
+      <div class="brand">
+        <img src="./static/logo_relant.png" alt="Logo Relant" class="brand-logo">
+      </div>     
+      <div><strong>CONFIGURADOR PARA AGENTE MARKETPLACE</strong><span></span></div>
+      <h1>Iniciar sesión</h1>
+      <label class="fld"><span>Usuario</span><input id="lgUser" name="username" autocomplete="username" required autocapitalize="none" spellcheck="false"></label>
+      <label class="fld"><span>Contraseña</span><input id="lgPass" name="password" type="password" autocomplete="current-password" required></label>
+      <div class="formerr" id="lgErr" hidden></div>
+      <button class="btn" id="lgBtn" type="submit">Entrar</button>
+    </form>
+  </section>
+
+  <!-- ======================= app ======================= -->
+  <div class="app" id="app" hidden>
+    <div class="sidescrim" id="sideScrim"></div>
+    <aside class="side" id="side" aria-label="Historial de conversaciones">
+      <div class="side-top">
+        <button class="new" id="newBtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Nueva conversación</button>
+        <button class="iconbtn" id="sideClose" type="button" title="Ocultar historial" aria-label="Ocultar historial"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></svg></button>
+      </div>
+      <div class="side-search"><input id="convSearch" type="search" placeholder="Buscar en mis conversaciones" aria-label="Buscar conversaciones"></div>
+      <nav class="convs" id="convs"></nav>
+      <div class="me">
+        <div class="menu" id="menu" hidden>
+          <button type="button" id="mPrefs">Preferencias</button>
+          <button type="button" id="mPass">Cambiar contraseña</button>
+          <a href="/admin" id="mAdmin" hidden>Administración</a>
+          <hr>
+          <button type="button" id="mLogout">Cerrar sesión</button>
+        </div>
+        <button type="button" id="meBtn" aria-haspopup="true" aria-expanded="false">
+          <span class="avatar" id="avatar">?</span>
+          <span class="who"><strong id="meName"></strong><span id="meRole"></span></span>
+        </button>
+      </div>
+    </aside>
+
+    <div class="main">
+      <header class="top">
+        <button class="iconbtn" id="sideOpen" type="button" title="Historial" aria-label="Mostrar historial"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+        <div class="brand">
+          <div class="mark" aria-hidden="true">R</div>
+          <div><strong>CONFIGURADOR DE AGENTE MARKETPLACE</strong><span></span></div>
+        </div>
+        <div class="status" id="status" title="Estado del índice"><span class="dot" id="statusDot"></span><span id="statusText">Cargando índice…</span></div>
+        <button class="ghost" id="filesBtn" type="button" hidden>Mis archivos</button>
+        <button class="ghost" id="docsBtn" type="button">Documentos</button>
+      </header>
+
+      <div class="banner" id="banner" hidden></div>
+      <div class="readonly-bar" id="roBar" hidden><span id="roText"></span><a class="ghost" href="/admin">Volver a administración</a></div>
+
+      <main class="thread" id="thread" aria-live="polite">
+        <div class="col" id="col"></div>
+      </main>
+
+      <form class="composer" id="composer" autocomplete="off">
+        <div class="inner">
+          <div class="field">
+            <label for="q" class="sr" hidden>Pregunta</label>
+            <textarea id="q" rows="1" placeholder="Escribe tu pregunta…" title="Enter envía · Shift+Enter nueva línea"></textarea>
+            <button id="send" type="submit">Enviar</button>
+          </div>
+          <div class="opts">
+            <div class="modeseg" id="modeSeg" role="group" aria-label="Modo" hidden>
+              <button type="button" data-mode="chat" aria-pressed="true">Asistente</button>
+              <button type="button" data-mode="quote" aria-pressed="false" title="Supervisor + agente cotizador + margen + verificador">Cotización multiagente</button>
+            </div>
+            <div class="anchor" id="kbWrap" hidden>
+              <button type="button" class="pickbtn" id="kbBtn" aria-haspopup="true" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg>Fuentes: <b id="kbCount">…</b></button>
+              <div class="pop" id="kbPop" hidden></div>
+            </div>
+            <label id="promptWrap" hidden><select class="mini" id="promptSel" aria-label="Estilo de respuesta"></select></label>
+            <label id="deepWrap"><input type="checkbox" id="deep"> Búsqueda profunda (agente)</label>
+            <label id="debugWrap"><input type="checkbox" id="debug"> Mostrar pasos</label>
+            <span class="hint" id="hint" hidden>Respondiendo a la aclaración</span>
+            <span class="quota" id="quota" hidden></span>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <template id="emptyTpl">
+    <section class="empty" id="empty">
+      <h1>¿Qué necesitas?</h1>
+      <p>Pregunta tus dudas tecnicas sobre nuestros productos.</p>
+      <div class="examples" id="examples">
+      </div>
+    </section>
+  </template>
+
+  <!-- ======================= documents drawer ======================= -->
+  <div class="scrim" id="scrim" hidden></div>
+  <aside class="drawer" id="drawer" hidden aria-label="Documentos indexados">
+    <header>
+      <h2>Documentos indexados</h2><button class="ghost" id="closeDocs" type="button">Cerrar</button>
+    </header>
+    <div class="filters">
+      <input id="docSearch" type="search" placeholder="Buscar por nombre, tema o código">
+      <select id="docType" aria-label="Tipo de documento">
+        <option value="">Todos los tipos</option>
+        <option value="manual">Manuales</option>
+        <option value="datasheet">Fichas técnicas</option>
+        <option value="table">Tablas CSV / Excel</option>
+        <option value="drawing">Dibujos</option>
+        <option value="catalogue">Catálogos</option>
+        <option value="spare_parts">Listas de refacciones</option>
+      </select>
+    </div>
+    <div class="summary" id="docSummary"></div>
+    <div class="doclist" id="docList"></div>
+  </aside>
+
+  <!-- ======================= my files (knowledge bases I can write) ======================= -->
+  <aside class="drawer" id="filesDrawer" hidden aria-label="Mis archivos">
+    <header>
+      <h2>Archivos</h2><button class="ghost" id="closeFiles" type="button">Cerrar</button>
+    </header>
+    <div class="filters">
+      <select id="filesKb" aria-label="Base de conocimientos" style="flex:1"></select>
+      <button class="ghost" id="filesReindex" type="button" title="Volver a indexar esta base">Reindexar</button>
+    </div>
+    <div class="summary" id="filesSummary"></div>
+    <div class="usage" id="filesUsage" hidden></div>
+    <label class="drop" id="drop"><input type="file" id="fileInput" multiple hidden>
+      Arrastra archivos aquí o <b>elige archivos</b><small id="dropHint"></small></label>
+    <div class="filesmsg" id="filesMsg" hidden></div>
+    <div class="doclist" id="filesList"></div>
+  </aside>
+
+  <!-- ======================= dialogs ======================= -->
+  <dialog id="prefsDlg">
+    <form method="dialog" id="prefsForm">
+      <h2>Preferencias</h2>
+      <p class="sub">Se guardan en tu usuario y se aplican en cualquier equipo.</p>
+      <label class="check" id="pDeepRow"><input type="checkbox" id="pDeep"><span>Búsqueda profunda por defecto<small>Usa el agente en cada pregunta: más completo, más lento y más costoso.</small></span></label>
+      <label class="check" id="pStepsRow"><input type="checkbox" id="pSteps"><span>Mostrar pasos del agente<small>Muestra las búsquedas y notas internas debajo de cada respuesta.</small></span></label>
+      <div class="fld"><span>Tema</span>
+        <div class="seg" role="radiogroup" aria-label="Tema">
+          <label><input type="radio" name="theme" value="auto">Automático</label>
+          <label><input type="radio" name="theme" value="light">Claro</label>
+          <label><input type="radio" name="theme" value="dark">Oscuro</label>
+        </div>
+      </div>
+      <div class="row-end"><button class="ghost" value="cancel" formnovalidate>Cancelar</button><button class="btn" id="prefsSave" value="save">Guardar</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="passDlg">
+    <form id="passForm">
+      <h2 id="passTitle">Cambiar contraseña</h2>
+      <p class="sub" id="passSub"></p>
+      <label class="fld"><span>Contraseña actual</span><input id="pwCur" type="password" autocomplete="current-password" required></label>
+      <label class="fld"><span>Nueva contraseña</span><input id="pwNew" type="password" autocomplete="new-password" required></label>
+      <label class="fld"><span>Repite la nueva contraseña</span><input id="pwNew2" type="password" autocomplete="new-password" required></label>
+      <div class="formerr" id="pwErr" hidden></div>
+      <div class="row-end"><button class="ghost" type="button" id="passCancel">Cancelar</button><button class="btn" type="submit">Guardar</button></div>
+    </form>
+  </dialog>
+
+  <script>
+    (() => {
+      "use strict";
+      const $ = (s) => document.querySelector(s);
+      const thread = $("#thread"), col = $("#col"), q = $("#q"), send = $("#send");
+      let busy = false;
+      let me = null;                 // {user, ...} from /auth/me
+      let convId = null;             // open conversation
+      let readOnly = false;
+      let clarifyOpen = false;       // last answer was a clarification question
+      let kbs = [], kbSel = [];      // knowledge bases I can search / selected for the next question
+      let uploadInfo = { exts: [], max: 50 };
+      let mode = "chat";             // chat | quote (multi-agent quote)
+      const can = (p) => !!me && me.user.permissions.includes(p);
+
+      // ---------------------------------------------------------------- helpers
+      const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) =>
+        ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+      const base = (p) => String(p || "").split("/").pop();
+      const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+      const scrollDown = () => { thread.scrollTop = thread.scrollHeight; };
+      const ICON = {
+        edit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16v4z"/></svg>',
+        del: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>',
+      };
+
+      class ApiError extends Error { constructor(status, detail) { super(detail); this.status = status; this.detail = detail; } }
+      async function api(path, opts = {}) {
+        const o = { credentials: "same-origin", ...opts, headers: { ...(opts.headers || {}) } };
+        if (o.body && typeof o.body !== "string") { o.body = JSON.stringify(o.body); o.headers["Content-Type"] = "application/json"; }
+        const r = await fetch(path, o);
+        let data = null;
+        try { data = await r.json(); } catch (_) { /* non-JSON */ }
+        if (!r.ok) {
+          const detail = data && (typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail));
+          if (r.status === 401 && !path.startsWith("/auth/login")) showLogin();
+          if (r.status === 403 && detail === "must_change_password") openPassword(true);
+          throw new ApiError(r.status, detail || `El servidor respondió ${r.status}.`);
+        }
+        return data;
+      }
+
+      // ---------------------------------------------------------------- downloads from the answer
+      // A plain <a download> hides server errors: the browser saves the JSON error as a
+      // file that does not open. Fetch it instead: on success save the real file with the
+      // server's file name, on error show the server's message under the link.
+      thread.addEventListener("click", async (ev) => {
+        if (ev.button !== 0 || ev.ctrlKey || ev.metaKey || ev.shiftKey) return;
+        const a = ev.target.closest && ev.target.closest("a.dl, a[download]");
+        if (!a || !thread.contains(a)) return;
+        const href = a.getAttribute("href") || "";
+        if (!href.startsWith("/") || href.startsWith("//")) return;
+        ev.preventDefault();
+        if (a.dataset.busy) return;
+        a.dataset.busy = "1";
+        const label = a.textContent;
+        let note = a.parentNode.querySelector(":scope > .dl-err");
+        if (note) note.remove();
+        a.classList.add("dl-busy");
+        try {
+          const r = await fetch(href, { credentials: "same-origin" });
+          if (!r.ok) {
+            let detail = "";
+            try { detail = decodeURIComponent(r.headers.get("X-Error-Detail") || ""); } catch (_) { }
+            if (!detail) try {
+              const d = await r.json();
+              detail = typeof d.detail === "string" ? d.detail : (d.detail && d.detail.message) || "";
+            } catch (_) { /* non-JSON */ }
+            if (r.status === 401) showLogin();
+            throw new Error(detail || `El servidor respondió ${r.status}.`);
+          }
+          const blob = await r.blob();
+          const cd = r.headers.get("Content-Disposition") || "";
+          let name = "";
+          const star = cd.match(/filename\*\s*=\s*UTF-8''([^;]+)/i);
+          if (star) { try { name = decodeURIComponent(star[1].trim()); } catch (_) { } }
+          if (!name) { const m = cd.match(/filename\s*=\s*"?([^";]+)"?/i); if (m) name = m[1].trim(); }
+          if (!name) name = decodeURIComponent(href.split("?")[0].split("/").pop() || "descarga");
+          const url = URL.createObjectURL(blob);
+          const tmp = document.createElement("a");
+          tmp.href = url; tmp.download = name; tmp.style.display = "none";
+          document.body.appendChild(tmp); tmp.click(); tmp.remove();
+          setTimeout(() => URL.revokeObjectURL(url), 60000);
+        } catch (e) {
+          note = el("span", "dl-err", " — No se pudo descargar: " + esc(e.message || String(e)));
+          a.after(note);
+        } finally {
+          a.textContent = label;
+          a.classList.remove("dl-busy");
+          delete a.dataset.busy;
+        }
+      });
+
+      // ---------------------------------------------------------------- rendering (unchanged from the original page)
+      const ROUTE = {
+        fast: ["Respuesta rápida", "fast"], "fast+table": ["Rápida + tabla", "fast"],
+        agent: ["Agente", "agent"], clarify: ["Pregunta de aclaración", "clar"],
+        quote: ["Cotización multiagente", "quote"],
+      };
+      const REASON = {
+        invoice_report: "reporte de invoices", no_permission: "sin permiso", catalog: "pregunta de catálogo", no_results: "sin resultados", code_not_found: "código no encontrado",
+        low_relevance: "baja relevancia", insufficient_context: "contexto insuficiente", forced: "búsqueda profunda",
+        needs_review: "requiere revisión", ready_for_approval: "lista para aprobación", clarify: "falta información",
+      };
+      const KIND = { text: "Doc", document: "Doc", table: "Tabla", image: "Dibujo", web: "Web", datasheet: "Hoja" };
+      const kbOf = (rel) => (String(rel || "").startsWith("@") ? String(rel).slice(1).split("/")[0] : "");
+      const kbName = (slug) => (kbs.find((k) => k.slug === slug) || {}).name || slug;
+
+      // ---------------------------------------------------------------- markdown (small, safe)
+      function inline(s, cite) {
+        const codes = [];
+        s = s.replace(/`([^`]+)`/g, (_, c) => { codes.push(c); return `\u0000${codes.length - 1}\u0000`; });
+        s = esc(s);
+        s = s.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+        s = s.replace(/(^|[\s(])\*([^*\n]+)\*(?=[\s).,;:]|$)/g, "$1<em>$2</em>");
+        s = s.replace(/\[([^\]]+)\]\((\/[^\s)]+)\)/g, '<a class="dl" href="$2" target="_blank" rel="noopener">$1</a>');
+        s = s.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+        s = s.replace(/\[([^\]\n]{2,240})\]/g, (m, id) => {
+          const raw = id.replace(/&amp;/g, "&").replace(/&#39;/g, "'").replace(/&quot;/g, '"');
+          const parts = raw.split(/\s*[,;]\s*/);
+          const html = parts.map((p) => {
+            const c = cite(p.trim());
+            return c ? `<a class="cite" href="${esc(c.url || "#")}" target="_blank" rel="noopener" title="${esc(c.source || p)}">${c.n}</a>` : null;
+          });
+          if (html.every((h) => h)) return html.join("");
+          return /[._\/]/.test(raw) ? `<span class="rawcite">[${esc(raw)}]</span>` : m;
+        });
+        s = s.replace(/(^|[\s(])(https?:\/\/[^\s<)]+)/g, '$1<a href="$2" target="_blank" rel="noopener">$2</a>');
+        return s.replace(/\u0000(\d+)\u0000/g, (_, i) => `<code>${esc(codes[+i])}</code>`);
+      }
+
+      function markdown(text, cite) {
+        const out = [];
+        const chunks = String(text || "").split(/```/);
+        chunks.forEach((chunk, ci) => {
+          if (ci % 2 === 1) { out.push(`<pre><code>${esc(chunk.replace(/^\w*\n/, ""))}</code></pre>`); return; }
+          const lines = chunk.split("\n");
+          let i = 0, para = [];
+          const flush = () => { if (para.length) { out.push(`<p>${para.map((l) => inline(l, cite)).join("<br>")}</p>`); para = []; } };
+          while (i < lines.length) {
+            const line = lines[i], t = line.trim();
+            if (!t) { flush(); i++; continue; }
+            if (/^\|.*\|$/.test(t) && i + 1 < lines.length && /^\|?\s*:?-{2,}/.test(lines[i + 1].trim())) {
+              flush();
+              const row = (l) => l.trim().replace(/^\||\|$/g, "").split("|").map((c) => c.trim());
+              const head = row(t); i += 2;
+              const body = [];
+              while (i < lines.length && /^\|.*\|$/.test(lines[i].trim())) { body.push(row(lines[i])); i++; }
+              out.push(`<div class="tablewrap"><table><thead><tr>${head.map((h) => `<th>${inline(h, cite)}</th>`).join("")}</tr></thead><tbody>${body.map((r) => `<tr>${r.map((c) => `<td>${inline(c, cite)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`);
+              continue;
+            }
+            const h = t.match(/^(#{1,4})\s+(.*)$/);
+            if (h) { flush(); out.push(`<h${h[1].length <= 2 ? 3 : 4}>${inline(h[2], cite)}</h${h[1].length <= 2 ? 3 : 4}>`); i++; continue; }
+            if (/^([-*•]|\d+[.)])\s+/.test(t)) {
+              flush();
+              const ordered = /^\d/.test(t);
+              const items = [];
+              while (i < lines.length && /^\s*([-*•]|\d+[.)])\s+/.test(lines[i])) {
+                items.push(lines[i].trim().replace(/^([-*•]|\d+[.)])\s+/, "")); i++;
+              }
+              const tag = ordered ? "ol" : "ul";
+              out.push(`<${tag}>${items.map((it) => `<li>${inline(it, cite)}</li>`).join("")}</${tag}>`);
+              continue;
+            }
+            para.push(line); i++;
+          }
+          flush();
+        });
+        return out.join("");
+      }
+
+      // ---------------------------------------------------------------- rendering
+      function addUser(text, isClarifyReply) {
+        $("#empty")?.remove();
+        const m = el("div", "msg-user");
+        if (isClarifyReply) m.appendChild(el("span", "tag", "Aclaración"));
+        m.appendChild(document.createTextNode(text));
+        col.appendChild(m);
+        scrollDown();
+      }
+
+      function addThinking(deep) {
+        const box = el("div", "msg-bot");
+        const t0 = Date.now();
+        const label = deep === "quote" ? "Los agentes están cotizando (cotizador → margen ∥ verificador)" : deep ? "El agente está investigando" : "Buscando en manuales y tablas";
+        box.innerHTML = `<div class="thinking"><span class="dots"><i></i><i></i><i></i></span><span class="lbl">${label}…</span></div>`;
+        const lbl = box.querySelector(".lbl");
+        const timer = setInterval(() => {
+          const s = Math.round((Date.now() - t0) / 1000);
+          lbl.textContent = `${s > 6 && !deep ? "Revisando más a fondo" : label}… ${s} s`;
+        }, 1000);
+        col.appendChild(box);
+        scrollDown();
+        return { box, stop: () => clearInterval(timer) };
+      }
+
+      function renderResult(box, res) {
+        box.innerHTML = "";
+        box.className = "msg-bot" + (res.clarify ? " clarify" : "");
+
+        // citations numbered in order of appearance in the answer
+        const byId = new Map((res.sources || []).map((s) => [s.id, s]));
+        const numbered = new Map();
+        const FILE_ID = /^(.+\.[A-Za-z0-9]{2,4})(?:_(?:chunk\d+|row\d+|table|drawing))?$/;
+        const cite = (id) => {
+          let s = byId.get(id);
+          if (!s) {                       // e.g. a file name quoted from the catalog
+            const m = id.match(FILE_ID);
+            if (!m || /\s{2,}/.test(id)) return null;
+            const ext = m[1].split(".").pop().toLowerCase();
+            s = {
+              id, source: m[1], url: "/files/" + m[1].split("/").map(encodeURIComponent).join("/"),
+              kind: ext === "csv" ? "table" : ["png", "jpg", "jpeg"].includes(ext) ? "image" : "document"
+            };
+          }
+          if (!numbered.has(id)) numbered.set(id, { n: numbered.size + 1, url: s.url, source: s.source, src: s });
+          return numbered.get(id);
+        };
+        const payload = res.payload || null;
+        if (payload && payload.type === "quote" && payload.quote) box.appendChild(renderQuote(payload, cite));
+        else box.appendChild(el("div", "answer", markdown(res.answer, cite)));
+
+        // meta line
+        const [rLabel, rCls] = ROUTE[res.route] || [res.route, "fast"];
+        const u = res.usage || {};
+        const secs = ((res.timings_ms || {}).total || 0) / 1000;
+        const meta = el("div", "meta");
+        meta.innerHTML = `<span class="chip ${rCls}">${esc(rLabel)}${res.escalation ? " · " + esc(REASON[res.escalation] || res.escalation) : ""}</span>`
+          + `<span>${u.llm_calls ?? 0} llamada${u.llm_calls === 1 ? "" : "s"} LLM</span>`
+          + `<span>${((u.input_tokens || 0) + (u.output_tokens || 0)).toLocaleString("es-MX")} tokens</span>`
+          + `<span>≈ US$${(u.est_cost_usd || 0).toFixed(4)}</span>`
+          + `<span>${secs.toFixed(1)} s</span>`
+          + (res.agent_steps ? `<span>${res.agent_steps} paso${res.agent_steps === 1 ? "" : "s"} del agente</span>` : "");
+        box.appendChild(meta);
+
+        // sources
+        const srcs = res.sources || [];
+        if (srcs.length || numbered.size) {
+          const cited = [...numbered.values()].map((v) => v.src);
+          const rest = srcs.filter((s) => !numbered.has(s.id));
+          const wrap = el("div");
+          wrap.appendChild(el("div", "block-title", cited.length ? "Fuentes citadas" : "Fuentes consultadas"));
+          const list = el("div", "sources");
+          const item = (s, n) => {
+            const a = el(s.url ? "a" : "div", "src");
+            if (s.url) { a.href = s.url; a.target = "_blank"; a.rel = "noopener"; }
+            const name = s.kind === "web" ? s.source : s.kind === "datasheet" ? "Hoja técnica " + s.id.slice(10) : base(s.source);
+            const detail = s.id !== s.source && s.kind !== "web" && s.kind !== "datasheet" ? ` <small>· ${esc(s.id.slice(s.source.length + 1) || "")}</small>` : "";
+            const kb = kbOf(s.source);
+            a.innerHTML = `<span class="n">${n ?? "·"}</span><span class="kind">${KIND[s.kind] || "Doc"}</span><span class="name" title="${esc(s.source)}">${esc(name)}${detail}${kb ? `<span class="kbtag">${esc(kbName(kb))}</span>` : ""}</span>`;
+            return a;
+          };
+          (cited.length ? cited : rest).forEach((s) => list.appendChild(item(s, cited.length ? numbered.get(s.id).n : null)));
+          wrap.appendChild(list);
+          if (cited.length && rest.length) {
+            const more = el("details", "more");
+            more.appendChild(el("summary", null, `Otros ${rest.length} resultado${rest.length === 1 ? "" : "s"} consultado${rest.length === 1 ? "" : "s"}`));
+            const l2 = el("div", "sources");
+            rest.forEach((s) => l2.appendChild(item(s, null)));
+            more.appendChild(l2);
+            wrap.appendChild(more);
+          }
+          box.appendChild(wrap);
+        }
+
+        // drawings
+        const dr = res.drawings || [];
+        if (dr.length) {
+          const wrap = el("div");
+          wrap.appendChild(el("div", "block-title", "Dibujos relacionados"));
+          const grid = el("div", "drawings");
+          dr.forEach((d) => {
+            const a = el("a"); a.href = d.url; a.target = "_blank"; a.rel = "noopener";
+            a.innerHTML = `<img loading="lazy" alt="${esc(base(d.source))}" src="${esc(d.url)}"><span title="${esc(d.source)}">${esc(base(d.source))}</span>`;
+            grid.appendChild(a);
+          });
+          wrap.appendChild(grid);
+          box.appendChild(wrap);
+        }
+
+        // agent steps (debug)
+        if (res.transcript && res.transcript.length) {
+          const d = el("details", "steps");
+          d.appendChild(el("summary", null, `Pasos y notas (${res.transcript.length})`));
+          const pre = el("pre"); pre.textContent = res.transcript.join("\n\n");
+          d.appendChild(pre);
+          box.appendChild(d);
+        }
+      }
+
+      // ---------------------------------------------------------------- multi-agent quote card
+      const LINE_ST = { ok: ["ok", "ok"], not_found: ["no encontrado", "bad"], no_price: ["sin precio", "bad"] };
+      const money = (v) => (v == null || v === "" ? "—" : Number(v).toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+      function renderQuote(p, cite) {
+        const q = p.quote, wrap = el("div", "quote");
+        const ready = p.status === "ready_for_approval";
+        wrap.appendChild(el("div", "qhead", `<strong>Cotización borrador${q.revision ? ` · revisión ${q.revision}` : ""}</strong>`
+          + `<span class="qstatus ${ready ? "ok" : "review"}">${ready ? "Lista para aprobación" : "Requiere revisión"}</span>`));
+        const rows = q.lines.map((l) => {
+          const [lbl, cls] = LINE_ST[l.status] || [l.status, "bad"];
+          const c = l.source_id ? cite(l.source_id) : null;
+          return `<tr><td><code>${esc(l.code || "—")}</code></td><td>${esc(l.description || "")}</td><td class="num">${l.qty}</td>`
+            + `<td class="num">${money(l.unit_price)}</td><td class="num">${money(l.line_total)}</td>`
+            + `<td><span class="lnst ${cls}">${esc(lbl)}</span></td>`
+            + `<td>${c ? `<a class="cite" href="${esc(c.url || "#")}" target="_blank" rel="noopener" title="${esc(c.source || "")}">${c.n}</a>` : ""}</td></tr>`;
+        }).join("");
+        wrap.appendChild(el("div", "tablewrap", `<table><thead><tr><th>Código</th><th>Descripción</th><th class="num">Cant.</th><th class="num">P. unitario</th><th class="num">Importe</th><th>Estado</th><th>Fuente</th></tr></thead>`
+          + `<tbody>${rows || `<tr><td colspan="7">Sin partidas.</td></tr>`}</tbody><tfoot><tr><td colspan="4">Total</td><td class="num">${money(q.total)}</td><td colspan="2"></td></tr></tfoot></table>`));
+        const m = p.margin || {};
+        if (m.summary) {
+          const below = (m.below_min || []).length;
+          wrap.appendChild(el("div", "qbox", `<h4>Agente de margen</h4><div>Margen global <strong>${esc(m.overall || "n/d")}</strong>${below ? ` · <span class="lnst bad">${below} partida${below === 1 ? "" : "s"} bajo el mínimo: ${esc(m.below_min.join(", "))}</span>` : ""}</div>`));
+        }
+        const issues = (p.verification || {}).issues || [];
+        wrap.appendChild(el("div", "qbox", `<h4>Agente verificador</h4>` + (issues.length
+          ? `<ul class="issues">${issues.map((i) => `<li class="${i.severity === "error" ? "err" : "warn"}">${esc(i.msg)}</li>`).join("")}</ul>`
+          : `<div class="lnst ok">Precios, códigos y totales verificados contra las tablas.</div>`)));
+        wrap.appendChild(el("div", "qnote", "Borrador generado por agentes: una persona debe revisarlo y aprobarlo antes de enviarlo al cliente."));
+        return wrap;
+      }
+
+      function renderError(box, msg) {
+        box.className = "msg-bot error";
+        box.innerHTML = `<div class="answer"><p><strong>No se pudo responder.</strong> ${esc(msg)}</p></div>`;
+      }
+
+      function addUser(text, isClarifyReply) {
+        $("#empty")?.remove();
+        const m = el("div", "msg-user");
+        if (isClarifyReply) m.appendChild(el("span", "tag", "Aclaración"));
+        m.appendChild(document.createTextNode(text));
+        col.appendChild(m);
+        scrollDown();
+      }
+
+      function addThinking(deep) {
+        const box = el("div", "msg-bot");
+        const t0 = Date.now();
+        const label = deep === "quote" ? "Los agentes están cotizando (cotizador → margen ∥ verificador)" : deep ? "El agente está investigando" : "Buscando en manuales y tablas";
+        box.innerHTML = `<div class="thinking"><span class="dots"><i></i><i></i><i></i></span><span class="lbl">${label}…</span></div>`;
+        const lbl = box.querySelector(".lbl");
+        const timer = setInterval(() => {
+          const s = Math.round((Date.now() - t0) / 1000);
+          lbl.textContent = `${s > 6 && !deep ? "Revisando más a fondo" : label}… ${s} s`;
+        }, 1000);
+        col.appendChild(box);
+        scrollDown();
+        return { box, stop: () => clearInterval(timer) };
+      }
+
+      function showEmpty() {
+        col.innerHTML = "";
+        col.appendChild($("#emptyTpl").content.cloneNode(true));
+        $("#examples").addEventListener("click", (e) => { if (e.target.matches("button")) ask(e.target.textContent); });
+      }
+
+      // ---------------------------------------------------------------- ask
+      async function ask(text) {
+        text = text.trim();
+        if (!text || busy || readOnly) return;
+        busy = true; send.disabled = true;
+        const quoteMode = mode === "quote" && can("agents.quote");
+        const deep = !quoteMode && $("#deep").checked && can("chat.agent"), debug = $("#debug").checked && can("chat.debug");
+        addUser(text, clarifyOpen);
+        q.value = ""; autosize();
+        const t = addThinking(quoteMode ? "quote" : deep);
+        const body = { query: text, debug, conversation_id: convId };
+        if (kbSel.length) body.kb_ids = kbSel;
+        if (!$("#promptWrap").hidden) body.prompt_id = +$("#promptSel").value;
+        try {
+          const data = await api(quoteMode ? "/quote" : deep ? "/chat/agent" : "/chat", { method: "POST", body });
+          t.stop();
+          renderResult(t.box, data);
+          if (data.quota) renderQuota(data.quota);
+          clarifyOpen = !!data.clarify;
+          const isNew = data.conversation_id !== convId;
+          convId = data.conversation_id;
+          setUrl(convId);
+          if (isNew) loadConvs(); else bumpConv(convId);
+        } catch (e) {
+          t.stop();
+          renderError(t.box, e instanceof ApiError ? e.detail : "No hay conexión con el servidor. ¿Sigue corriendo uvicorn?");
+          if (e instanceof ApiError && e.status !== 429 && convId == null) loadConvs();
+          if (e instanceof ApiError && e.status === 429) loadQuota();
+        }
+        $("#hint").hidden = !clarifyOpen;
+        busy = false; send.disabled = false;
+        scrollDown(); q.focus();
+      }
+
+      // ---------------------------------------------------------------- conversations
+      let convQuery = "", convTimer = null, convItems = [], convTotal = 0;
+      const DAY = 86400000;
+      function groupOf(iso) {
+        const d = new Date(iso), now = new Date();
+        const start = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+        if (d >= start) return "Hoy";
+        if (d >= start - DAY) return "Ayer";
+        if (d >= start - 6 * DAY) return "Últimos 7 días";
+        if (d >= start - 29 * DAY) return "Últimos 30 días";
+        return d.toLocaleDateString("es-MX", { month: "long", year: "numeric" });
+      }
+      async function loadConvs(append = false) {
+        const box = $("#convs");
+        try {
+          const p = new URLSearchParams({ q: convQuery, limit: "60", offset: append ? String(convItems.length) : "0" });
+          const d = await api("/conversations?" + p);
+          convItems = append ? convItems.concat(d.items) : d.items;
+          convTotal = d.total;
+        } catch (_) { return; }
+        box.innerHTML = "";
+        if (!convItems.length) { box.appendChild(el("div", "none", convQuery ? "Sin coincidencias." : "Aún no tienes conversaciones.")); return; }
+        let last = "";
+        convItems.forEach((c) => {
+          const g = groupOf(c.updated_at);
+          if (g !== last) { box.appendChild(el("div", "grp", esc(g))); last = g; }
+          const row = el("div", "conv" + (c.id === convId ? " active" : ""));
+          row.dataset.id = c.id;
+          const open = el("button", "open"); open.type = "button"; open.textContent = c.title || "(sin título)"; open.title = c.title;
+          open.addEventListener("click", () => { openConversation(c.id); closeSideMobile(); });
+          const ren = el("button", "act", ICON.edit); ren.type = "button"; ren.title = "Renombrar"; ren.setAttribute("aria-label", "Renombrar");
+          ren.addEventListener("click", () => renameConv(c));
+          const del = el("button", "act del", ICON.del); del.type = "button"; del.title = "Eliminar"; del.setAttribute("aria-label", "Eliminar");
+          del.addEventListener("click", () => deleteConv(c));
+          row.append(open, ren, del);
+          box.appendChild(row);
+        });
+        if (convItems.length < convTotal) {
+          const more = el("button", "moreconv", "Cargar más"); more.type = "button";
+          more.addEventListener("click", () => loadConvs(true));
+          box.appendChild(more);
+        }
+      }
+      function bumpConv(id) {
+        const i = convItems.findIndex((c) => c.id === id);
+        if (i > 0 || (i === 0 && groupOf(convItems[0].updated_at) !== "Hoy")) { loadConvs(); }
+      }
+      function markActive() {
+        document.querySelectorAll(".conv").forEach((r) => r.classList.toggle("active", +r.dataset.id === convId));
+      }
+      async function renameConv(c) {
+        const t = prompt("Nuevo nombre de la conversación:", c.title);
+        if (!t || !t.trim()) return;
+        try { await api(`/conversations/${c.id}`, { method: "PATCH", body: { title: t.trim() } }); loadConvs(); } catch (e) { alert(e.detail || e); }
+      }
+      async function deleteConv(c) {
+        if (!confirm(`¿Eliminar «${c.title}» de tu historial?`)) return;
+        try {
+          await api(`/conversations/${c.id}`, { method: "DELETE" });
+          if (c.id === convId) newConversation();
+          loadConvs();
+        } catch (e) { alert(e.detail || e); }
+      }
+      function setUrl(id) {
+        const u = new URL(location.href);
+        if (id) u.searchParams.set("c", id); else u.searchParams.delete("c");
+        history.replaceState(null, "", u);
+      }
+      function setReadOnly(ro, conv) {
+        readOnly = ro;
+        $("#composer").hidden = ro;
+        $("#roBar").hidden = !ro;
+        if (ro && conv) {
+          const u = conv.user || {};
+          $("#roText").textContent = `Viendo la conversación de ${u.full_name || u.username} (${u.username}) · solo lectura${conv.deleted ? " · el usuario la eliminó" : ""}`;
+        }
+      }
+      function newConversation() {
+        convId = null; clarifyOpen = false; $("#hint").hidden = true;
+        setReadOnly(false); setUrl(null); showEmpty(); markActive(); q.focus();
+      }
+      async function openConversation(id) {
+        if (busy) return;
+        try {
+          const d = await api(`/conversations/${id}`);
+          convId = d.conversation.id;
+          setReadOnly(d.read_only, d.conversation);
+          col.innerHTML = "";
+          d.messages.forEach((m) => {
+            if (m.role === "user") { addUser(m.content, m.is_clarify_reply); return; }
+            const box = el("div", "msg-bot");
+            col.appendChild(box);
+            if (m.status === "error") renderError(box, m.error || "Error"); else renderResult(box, m);
+          });
+          if (!d.messages.length) showEmpty();
+          const last = d.messages[d.messages.length - 1];
+          clarifyOpen = !!(last && last.role === "assistant" && last.clarify);
+          $("#hint").hidden = !clarifyOpen;
+          setUrl(convId); markActive(); scrollDown();
+          if (!d.read_only) q.focus();
+        } catch (e) {
+          if (e.status === 404) { newConversation(); }
+        }
+      }
+
+      // ---------------------------------------------------------------- composer
+      function autosize() { q.style.height = "auto"; q.style.height = Math.min(q.scrollHeight, 180) + "px"; }
+      q.addEventListener("input", autosize);
+      q.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); ask(q.value); }
+      });
+      $("#composer").addEventListener("submit", (e) => { e.preventDefault(); ask(q.value); });
+      $("#newBtn").addEventListener("click", () => { newConversation(); closeSideMobile(); });
+      $("#convSearch").addEventListener("input", (e) => { clearTimeout(convTimer); convTimer = setTimeout(() => { convQuery = e.target.value.trim(); loadConvs(); }, 250); });
+      $("#deep").addEventListener("change", (e) => savePrefs({ deep_search: e.target.checked }));
+      $("#debug").addEventListener("change", (e) => savePrefs({ show_steps: e.target.checked }));
+
+      // ---------------------------------------------------------------- sidebar
+      const app = $("#app");
+      const mobile = () => matchMedia("(max-width: 860px)").matches;
+      function closeSideMobile() { app.classList.remove("side-open"); }
+      $("#sideOpen").addEventListener("click", () => {
+        if (mobile()) { app.classList.add("side-open"); return; }
+        app.classList.toggle("side-closed");
+        savePrefs({ sidebar_open: !app.classList.contains("side-closed") });
+      });
+      $("#sideClose").addEventListener("click", () => {
+        if (mobile()) { closeSideMobile(); return; }
+        app.classList.add("side-closed"); savePrefs({ sidebar_open: false });
+      });
+      $("#sideScrim").addEventListener("click", closeSideMobile);
+
+      // ---------------------------------------------------------------- user menu, preferences, password
+      const menu = $("#menu");
+      $("#meBtn").addEventListener("click", (e) => { e.stopPropagation(); menu.hidden = !menu.hidden; $("#meBtn").setAttribute("aria-expanded", String(!menu.hidden)); });
+      document.addEventListener("click", (e) => { if (!menu.hidden && !menu.contains(e.target)) { menu.hidden = true; $("#meBtn").setAttribute("aria-expanded", "false"); } });
+      $("#mLogout").addEventListener("click", async () => { try { await api("/auth/logout", { method: "POST" }); } catch (_) { } location.href = "/"; });
+      $("#mPrefs").addEventListener("click", () => { menu.hidden = true; openPrefs(); });
+      $("#mPass").addEventListener("click", () => { menu.hidden = true; openPassword(false); });
+
+      function applyTheme(t) {
+        if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme;
+        try { localStorage.setItem("relant.theme", t || "auto"); } catch (_) { }
+      }
+      let prefTimer = null, prefPending = {};
+      function savePrefs(patch) {
+        Object.assign(me.user.preferences, patch);
+        Object.assign(prefPending, patch);
+        clearTimeout(prefTimer);
+        prefTimer = setTimeout(async () => {
+          const body = prefPending; prefPending = {};
+          try { me.user.preferences = await api("/me/preferences", { method: "PUT", body }); } catch (_) { }
+        }, 300);
+      }
+      function openPrefs() {
+        const p = me.user.preferences;
+        $("#pDeep").checked = !!p.deep_search; $("#pSteps").checked = !!p.show_steps;
+        $("#pDeepRow").hidden = !can("chat.agent"); $("#pStepsRow").hidden = !can("chat.debug");
+        document.querySelectorAll('input[name="theme"]').forEach((r) => { r.checked = r.value === (p.theme || "auto"); });
+        $("#prefsDlg").showModal();
+      }
+      $("#prefsDlg").addEventListener("close", () => {
+        if ($("#prefsDlg").returnValue !== "save") return;
+        const theme = document.querySelector('input[name="theme"]:checked')?.value || "auto";
+        const patch = { deep_search: $("#pDeep").checked, show_steps: $("#pSteps").checked, theme };
+        applyTheme(theme);
+        $("#deep").checked = patch.deep_search; $("#debug").checked = patch.show_steps;
+        savePrefs(patch);
+      });
+
+      let passForced = false;
+      function openPassword(forced) {
+        passForced = forced;
+        $("#passTitle").textContent = forced ? "Crea tu contraseña" : "Cambiar contraseña";
+        $("#passSub").textContent = (forced ? "Por seguridad, cambia la contraseña temporal antes de continuar. " : "")
+          + `Mínimo ${me?.password_min_length || 8} caracteres, con letras y números.`;
+        $("#passCancel").hidden = forced;
+        $("#pwErr").hidden = true;
+        $("#passForm").reset();
+        const dlg = $("#passDlg");
+        if (!dlg.open) dlg.showModal();
+      }
+      $("#passDlg").addEventListener("cancel", (e) => { if (passForced) e.preventDefault(); });
+      $("#passCancel").addEventListener("click", () => $("#passDlg").close());
+      $("#passForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const err = $("#pwErr");
+        if ($("#pwNew").value !== $("#pwNew2").value) { err.textContent = "Las contraseñas nuevas no coinciden."; err.hidden = false; return; }
+        try {
+          await api("/auth/change-password", { method: "POST", body: { current_password: $("#pwCur").value, new_password: $("#pwNew").value } });
+          $("#passDlg").close();
+          if (passForced) { passForced = false; await boot(); }
+        } catch (ex) { err.textContent = ex.detail || String(ex); err.hidden = false; }
+      });
+
+      // ---------------------------------------------------------------- login
+      function showLogin() {
+        $("#app").hidden = true; $("#login").hidden = false;
+        clearTimeout(pollTimer);
+        setTimeout(() => $("#lgUser").focus(), 0);
+      }
+      $("#loginForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const btn = $("#lgBtn"), err = $("#lgErr");
+        btn.disabled = true; err.hidden = true;
+        try {
+          await api("/auth/login", { method: "POST", body: { username: $("#lgUser").value, password: $("#lgPass").value } });
+          $("#lgPass").value = "";
+          await boot();
+        } catch (ex) { err.textContent = ex.detail || "No se pudo iniciar sesión."; err.hidden = false; }
+        btn.disabled = false;
+      });
+
+      // ---------------------------------------------------------------- index status
+      let pollTimer = null;
+      async function health() {
+        let next = 60000;
+        try {
+          const h = await api("/health");
+          const ix = h.index || {}, job = h.index_job || {}, cfg = h.config || {};
+          const dot = $("#statusDot"), txt = $("#statusText"), banner = $("#banner");
+          const sel = h.selection || null;
+          const running = job.state === "running" || !!(sel && sel.indexing);
+          const nFiles = sel ? sel.files : ix.files, nChunks = sel ? sel.chunks : ix.chunks, nKb = sel ? sel.kbs.length : 1;
+          dot.className = "dot " + (running ? "busy" : nFiles ? "ok" : "bad");
+          txt.textContent = running ? `Indexando… (${nFiles || 0} documentos listos)`
+            : `${(nFiles || 0).toLocaleString("es-MX")} documentos · ${(nChunks || 0).toLocaleString("es-MX")} fragmentos`
+            + (nKb > 1 ? ` · ${nKb} bases` : "")
+            + (ix.indexed_at ? ` · actualizado ${ix.indexed_at.replace("T", " ").slice(0, 16)}` : "");
+          let msg = "";
+          if (!nFiles && !running && !(sel && sel.kbs.length > 1)) {
+            if (!h.config) msg = "Todavía no hay documentos indexados. Avisa al administrador.";
+            else msg = cfg.data_dir_exists === false
+              ? `No hay documentos indexados: la carpeta de datos <code>${esc(cfg.data_dir)}</code> no existe. Corrige <code>RAG_DATA_DIR</code> (y <code>RAG_DB_DIR</code>) en el archivo <code>.env</code> y reinicia el servidor.`
+              : `No hay documentos indexados todavía. Revisa que <code>RAG_DATA_DIR</code> apunte a la carpeta con los PDF, CSV y dibujos, y reinicia el servidor o ejecuta <code>python -m app.cli update</code>.`;
+          } else if (ix.startup_warning || job.state === "aborted" || job.state === "error") {
+            msg = `La última indexación no terminó: ${esc(ix.startup_warning || job.error || "")}. Se puede consultar lo que ya está indexado.`;
+          }
+          banner.innerHTML = msg; banner.hidden = !msg;
+          if (running) next = 5000;
+        } catch (e) {
+          if (e instanceof ApiError && e.status === 401) return;
+          $("#statusDot").className = "dot bad";
+          $("#statusText").textContent = "Sin conexión con el servidor";
+          next = 10000;
+        }
+        clearTimeout(pollTimer);
+        pollTimer = setTimeout(health, next);
+      }
+
+      // ---------------------------------------------------------------- documents drawer
+      const drawer = $("#drawer"), scrim = $("#scrim");
+      let docTimer = null;
+      function openDocs() { drawer.hidden = false; scrim.hidden = false; loadDocs(); $("#docSearch").focus(); }
+      function closeDocs() { drawer.hidden = true; if (filesDrawer.hidden) scrim.hidden = true; }
+      async function loadDocs() {
+        const p = new URLSearchParams({ keyword: $("#docSearch").value.trim(), doc_type: $("#docType").value, limit: "200", kb: kbSel.join(",") });
+        const list = $("#docList");
+        try {
+          const d = await api("/documents?" + p);
+          $("#docSummary").textContent = d.total ? `${d.total} coincidencia${d.total === 1 ? "" : "s"} · colección: ${d.summary}` : "Ningún documento coincide.";
+          list.innerHTML = "";
+          (d.items || []).forEach((it) => {
+            const a = el("a", "doc"); a.href = "/files/" + it.rel.split("/").map(encodeURIComponent).join("/"); a.target = "_blank"; a.rel = "noopener";
+            a.innerHTML = `<span class="t">${esc(it.title || base(it.rel))}</span>`
+              + `<span class="r">${esc(it.type_label)}${it.manufacturer ? " · " + esc(it.manufacturer) : ""} · ${esc(it.rel.replace(/^@[^/]+\//, ""))}${kbs.length > 1 ? ` · <b>${esc(kbName(it.kb))}</b>` : ""}</span>`
+              + (it.codes && it.codes.length ? `<span class="c">${esc(it.codes.join(", "))}${it.n_codes > it.codes.length ? " …" : ""}</span>` : "");
+            list.appendChild(a);
+          });
+        } catch (_) {
+          $("#docSummary").textContent = "No se pudo cargar la lista de documentos.";
+        }
+      }
+      $("#docsBtn").addEventListener("click", openDocs);
+      $("#closeDocs").addEventListener("click", closeDocs);
+      scrim.addEventListener("click", () => { closeDocs(); closeFiles(); });
+      document.addEventListener("keydown", (e) => { if (e.key === "Escape") { if (!drawer.hidden) closeDocs(); if (!filesDrawer.hidden) closeFiles(); } });
+      $("#docSearch").addEventListener("input", () => { clearTimeout(docTimer); docTimer = setTimeout(loadDocs, 250); });
+      $("#docType").addEventListener("change", loadDocs);
+
+      // ---------------------------------------------------------------- knowledge bases (multi-RAG)
+      const SCOPE = { user: ["Personal", "user"], role: ["Rol", "role"], global: ["General", "global"] };
+      async function loadKbs() {
+        const d = await api("/kb");
+        kbs = d.items; uploadInfo = { exts: d.upload_exts || [], max: d.max_upload_mb || 50 };
+        const valid = new Set(kbs.map((k) => k.slug));
+        kbSel = (d.selected || []).filter((x) => valid.has(x));
+        $("#kbWrap").hidden = kbs.length < 1;
+        $("#filesBtn").hidden = !kbs.some((k) => k.can_write && !(k.is_default && !can("kb.manage")));
+        renderKbBtn();
+      }
+      function renderKbBtn() {
+        $("#kbCount").textContent = kbSel.length === kbs.length ? (kbs.length > 1 ? `todas (${kbs.length})` : kbName(kbSel[0]))
+          : kbSel.length === 1 ? kbName(kbSel[0]) : `${kbSel.length} de ${kbs.length}`;
+        $("#kbBtn").title = "Buscar en: " + kbSel.map(kbName).join(", ");
+      }
+      function renderKbPop() {
+        const pop = $("#kbPop");
+        pop.innerHTML = `<div class="pophead"><span>Buscar en</span><button type="button" data-all>Todas</button></div>`;
+        kbs.forEach((k) => {
+          const [lbl, cls] = k.is_default ? ["Principal", "global"] : (SCOPE[k.scope] || ["", "global"]);
+          const row = el("label", "kbrow");
+          row.innerHTML = `<input type="checkbox" value="${esc(k.slug)}" ${kbSel.includes(k.slug) ? "checked" : ""}>`
+            + `<span class="kn">${esc(k.name)}<span class="scope ${cls}">${lbl}</span><small>${(k.files || 0).toLocaleString("es-MX")} archivo${k.files === 1 ? "" : "s"}${k.indexing ? " · indexando…" : ""}${k.description ? " · " + esc(k.description) : ""}</small></span>`;
+          pop.appendChild(row);
+        });
+        pop.querySelector("[data-all]").addEventListener("click", () => { kbSel = kbs.map((k) => k.slug); afterKbChange(); renderKbPop(); });
+        pop.querySelectorAll("input").forEach((i) => i.addEventListener("change", () => {
+          const checked = [...pop.querySelectorAll("input:checked")].map((x) => x.value);
+          if (!checked.length) { i.checked = true; return; }          // at least one base
+          kbSel = kbs.map((k) => k.slug).filter((x) => checked.includes(x));
+          afterKbChange();
+        }));
+      }
+      function afterKbChange() { renderKbBtn(); savePrefs({ kbs: kbSel }); clearTimeout(kbHealth); kbHealth = setTimeout(health, 600); }
+      let kbHealth = null;
+      $("#kbBtn").addEventListener("click", (e) => {
+        e.stopPropagation();
+        const pop = $("#kbPop"), open = pop.hidden;
+        if (open) renderKbPop();
+        pop.hidden = !open; $("#kbBtn").setAttribute("aria-expanded", String(open));
+      });
+      document.addEventListener("click", (e) => {
+        const pop = $("#kbPop");
+        if (!pop.hidden && !pop.contains(e.target)) { pop.hidden = true; $("#kbBtn").setAttribute("aria-expanded", "false"); }
+      });
+
+      // ---------------------------------------------------------------- prompt profiles + mode
+      async function loadPrompts() {
+        const d = await api("/prompts");
+        const sel = $("#promptSel");
+        $("#promptWrap").hidden = !d.items.length;
+        sel.innerHTML = `<option value="0">Estilo: estándar</option>` + d.items.map((p) =>
+          `<option value="${p.id}" title="${esc(p.description || "")}">Estilo: ${esc(p.name)}${p.id === d.role_default ? " (de tu rol)" : ""}</option>`).join("");
+        sel.value = String(d.selected || 0);
+      }
+      $("#promptSel").addEventListener("change", (e) => savePrefs({ prompt_id: +e.target.value }));
+      function setMode(m, save = true) {
+        mode = m;
+        document.querySelectorAll("#modeSeg button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.mode === m)));
+        $("#deepWrap").hidden = m === "quote" || !can("chat.agent");
+        $("#promptWrap").style.display = m === "quote" ? "none" : "";
+        q.placeholder = m === "quote" ? "Describe lo que hay que cotizar: códigos de artículo y cantidades…" : "Escribe tu pregunta…";
+        if (save) savePrefs({ mode: m });
+      }
+      document.querySelectorAll("#modeSeg button").forEach((b) => b.addEventListener("click", () => { setMode(b.dataset.mode); q.focus(); }));
+
+      // ---------------------------------------------------------------- quota
+      const fmtN = (v) => Number(v || 0).toLocaleString("es-MX");
+      async function loadQuota() { try { renderQuota(await api("/me/usage")); } catch (_) { } }
+      function renderQuota(u) {
+        const box = $("#quota");
+        const cands = [];
+        if (u.daily_token_limit) cands.push([u.pct_day, `Tokens hoy ${fmtN(u.tokens_today)} / ${fmtN(u.daily_token_limit)}`]);
+        if (u.monthly_token_limit) cands.push([u.pct_month, `Tokens del mes ${fmtN(u.tokens_month)} / ${fmtN(u.monthly_token_limit)}`]);
+        if (!cands.length && u.daily_query_limit) cands.push([100 * u.questions_today / u.daily_query_limit, `Preguntas hoy ${u.questions_today} / ${u.daily_query_limit}`]);
+        if (!cands.length) { box.hidden = true; return; }
+        cands.sort((a, b) => b[0] - a[0]);
+        const [pct, label] = cands[0];
+        box.className = "quota" + (pct >= 100 ? " over" : pct >= (u.warn_pct || 80) ? " warn" : "");
+        box.innerHTML = `<span class="qbar" aria-hidden="true"><i style="width:${Math.min(100, pct).toFixed(0)}%"></i></span><span>${label}</span>`;
+        box.title = cands.map((c) => c[1]).join(" · ");
+        box.hidden = false;
+      }
+
+      // ---------------------------------------------------------------- my files (upload to my bases)
+      const filesDrawer = $("#filesDrawer");
+      let filesTimer = null;
+      const fmtSize = (b) => b >= 1048576 ? (b / 1048576).toFixed(1) + " MB" : Math.max(1, Math.round(b / 1024)) + " KB";
+      const FST = { indexed: "Indexado", pending: "Pendiente", ignored: "No se indexa", unsupported: "No soportado" };
+      function writableKbs() { return kbs.filter((k) => k.can_write && !(k.is_default && !can("kb.manage"))); }
+      function openFiles() {
+        const sel = $("#filesKb"), w = writableKbs(), cur = sel.value;
+        sel.innerHTML = w.map((k) => `<option value="${esc(k.slug)}">${esc(k.name)} · ${(SCOPE[k.scope] || [""])[0]}</option>`).join("");
+        if (w.some((k) => k.slug === cur)) sel.value = cur;
+        $("#dropHint").textContent = `${uploadInfo.exts.join(" ")} · máx. ${uploadInfo.max} MB por archivo · las imágenes van a la carpeta drawings/`;
+        filesDrawer.hidden = false; scrim.hidden = false;
+        loadFiles();
+      }
+      function closeFiles() { filesDrawer.hidden = true; if (drawer.hidden) scrim.hidden = true; clearTimeout(filesTimer); }
+      function filesMsg(html, ok) { const m = $("#filesMsg"); m.className = "filesmsg " + (ok ? "formok" : "formerr"); m.innerHTML = html; m.hidden = !html; }
+      async function loadFiles() {
+        clearTimeout(filesTimer);
+        const slug = $("#filesKb").value;
+        if (!slug) return;
+        let d;
+        try { d = await api(`/kb/${encodeURIComponent(slug)}/files`); } catch (e) { $("#filesSummary").textContent = e.detail || "No se pudo cargar."; return; }
+        const job = (d.status && d.status.job) || {}, running = ["running", "queued"].includes(job.state);
+        $("#filesSummary").textContent = `${d.items.length} archivo${d.items.length === 1 ? "" : "s"} · ${d.status.files} indexado${d.status.files === 1 ? "" : "s"}`
+          + (running ? " · indexando…" : job.state === "aborted" || job.state === "error" ? ` · la última indexación falló: ${job.error || ""}` : "");
+        const us = $("#filesUsage");
+        if (d.quota_bytes) {
+          const pct = Math.min(100, 100 * d.total_bytes / d.quota_bytes);
+          us.innerHTML = `<span>Espacio usado: ${fmtSize(d.total_bytes)} de ${fmtSize(d.quota_bytes)}</span><span class="ubar"><i style="width:${pct.toFixed(0)}%"></i></span>`;
+          us.hidden = false;
+        } else us.hidden = true;
+        $("#drop").classList.toggle("disabled", !d.can_write);
+        const list = $("#filesList"); list.innerHTML = "";
+        if (!d.items.length) list.appendChild(el("div", "summary", "Esta base todavía no tiene archivos."));
+        d.items.forEach((f) => {
+          const row = el("div", "frow");
+          const name = f.status === "indexed" ? `<a href="/files/${f.rel.split("/").map(encodeURIComponent).join("/")}" target="_blank" rel="noopener">${esc(f.path)}</a>` : `<span class="t">${esc(f.path)}</span>`;
+          row.innerHTML = `<div class="fn">${name}<small>${fmtSize(f.size)} · ${new Date(f.modified).toLocaleString("es-MX", { dateStyle: "medium", timeStyle: "short" })}${f.title && f.title !== f.name ? " · " + esc(f.title) : ""}</small></div>`
+            + `<span class="fst ${f.status}">${FST[f.status] || f.status}</span>`;
+          if (d.can_write) {
+            const del = el("button", "fdel", ICON.del); del.type = "button"; del.title = "Eliminar"; del.setAttribute("aria-label", "Eliminar " + f.path);
+            del.addEventListener("click", async () => {
+              if (!confirm(`¿Eliminar «${f.path}» de la base?`)) return;
+              try { await api(`/kb/${encodeURIComponent(slug)}/files/${f.path.split("/").map(encodeURIComponent).join("/")}`, { method: "DELETE" }); filesMsg("", true); loadFiles(); } catch (e) { filesMsg(esc(e.detail), false); }
+            });
+            row.appendChild(del);
+          }
+          list.appendChild(row);
+        });
+        if (running && !filesDrawer.hidden) filesTimer = setTimeout(() => { loadFiles(); }, 2000);
+        else if (job.state === "done") { loadKbs().catch(() => { }); }
+      }
+      async function uploadFiles(fileList) {
+        const slug = $("#filesKb").value;
+        if (!slug || !fileList.length) return;
+        const fd = new FormData();
+        [...fileList].forEach((f) => fd.append("files", f, f.name));
+        filesMsg(`Subiendo ${fileList.length} archivo${fileList.length === 1 ? "" : "s"}…`, true);
+        try {
+          const r = await fetch(`/kb/${encodeURIComponent(slug)}/files`, { method: "POST", body: fd, credentials: "same-origin" });
+          const d = await r.json().catch(() => ({}));
+          if (!r.ok) throw new ApiError(r.status, typeof d.detail === "string" ? d.detail : `Error ${r.status}`);
+          const ok = d.saved.length ? `${d.saved.length} archivo${d.saved.length === 1 ? "" : "s"} guardado${d.saved.length === 1 ? "" : "s"}; se están indexando.` : "";
+          const bad = d.rejected.map((x) => `<div>${esc(x.name)}: ${esc(x.reason)}</div>`).join("");
+          filesMsg(ok + bad, !bad);
+        } catch (e) { filesMsg(esc(e.detail || String(e)), false); }
+        $("#fileInput").value = "";
+        loadFiles();
+      }
+      $("#filesBtn").addEventListener("click", openFiles);
+      $("#closeFiles").addEventListener("click", closeFiles);
+      $("#filesKb").addEventListener("change", () => { filesMsg("", true); loadFiles(); });
+      $("#fileInput").addEventListener("change", (e) => uploadFiles(e.target.files));
+      $("#filesReindex").addEventListener("click", async () => {
+        try { await api(`/kb/${encodeURIComponent($("#filesKb").value)}/reindex`, { method: "POST", body: { mode: "update" } }); loadFiles(); } catch (e) { filesMsg(esc(e.detail), false); }
+      });
+      const drop = $("#drop");
+      ["dragenter", "dragover"].forEach((t) => drop.addEventListener(t, (e) => { e.preventDefault(); drop.classList.add("over"); }));
+      ["dragleave", "drop"].forEach((t) => drop.addEventListener(t, (e) => { e.preventDefault(); drop.classList.remove("over"); }));
+      drop.addEventListener("drop", (e) => uploadFiles(e.dataTransfer.files));
+
+      // ---------------------------------------------------------------- start
+      const ROLE_LABEL = { admin: "Administrador", supervisor: "Supervisor", usuario: "Usuario", importaciones: "Importaciones", exportaciones: "Exportaciones" };
+      async function boot() {
+        try { me = await api("/auth/me"); } catch (_) { return; }
+        const u = me.user, p = u.preferences;
+        $("#login").hidden = true; $("#app").hidden = false;
+        applyTheme(p.theme);
+        $("#meName").textContent = u.full_name || u.username;
+        $("#meRole").textContent = `${u.username} · ${ROLE_LABEL[u.role] || u.role}`;
+        $("#avatar").textContent = (u.full_name || u.username).split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
+        $("#mAdmin").hidden = !["users.manage", "conversations.read_all", "reports.read", "index.manage", "kb.manage", "prompts.manage", "limits.manage"].some(can);
+        $("#docsBtn").hidden = !can("documents.read");
+        $("#deepWrap").hidden = !can("chat.agent"); $("#deep").checked = !!p.deep_search && can("chat.agent");
+        $("#debugWrap").hidden = !can("chat.debug"); $("#debug").checked = !!p.show_steps && can("chat.debug");
+        $("#modeSeg").hidden = !can("agents.quote");
+        setMode(can("agents.quote") && p.mode === "quote" ? "quote" : "chat", false);
+        loadQuota();
+        if (!mobile() && p.sidebar_open === false) app.classList.add("side-closed");
+        if (u.must_change_password) { openPassword(true); return; }
+        await Promise.all([loadKbs().catch(() => { }), loadPrompts().catch(() => { })]);
+        health();
+        loadConvs();
+        const cid = +new URLSearchParams(location.search).get("c");
+        if (cid) openConversation(cid); else newConversation();
+      }
+      showEmpty();
+      fetch("/auth/me", { credentials: "same-origin" }).then((r) => (r.ok ? boot() : showLogin())).catch(showLogin);
+    })();
+  </script>
+</body>
+
+</html>

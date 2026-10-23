@@ -1,0 +1,31 @@
+{
+  "productos": [
+    {
+      "id": "PROD-001",
+      "Producto": "Válvula Dosificadora de Precisión",
+      "Precio": 120.5,
+      "Categoria": "Válvulas",
+      "Imagen_URL": "https://via.placeholder.com/150",
+      "Material": "Acero Inoxidable",
+      "Volumen_ml": 50
+    },
+    {
+      "id": "PROD-002",
+      "Producto": "Cartucho Industrial 30cc",
+      "Precio": 15.0,
+      "Categoria": "Consumibles",
+      "Imagen_URL": "https://via.placeholder.com/150",
+      "Material": "Polipropileno",
+      "Volumen_ml": 30
+    },
+    {
+      "id": "PROD-003",
+      "Producto": "Controlador de Presión Digital",
+      "Precio": 350.0,
+      "Categoria": "Controladores",
+      "Imagen_URL": "https://via.placeholder.com/150",
+      "Material": "Aluminio",
+      "Voltaje": "24V DC"
+    }
+  ]
+}

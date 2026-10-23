@@ -1,0 +1,19 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("postgresql://neondb_owner:npg_sb7aqRlvF2Ec@ep-bold-rain-ayh1pah1-pooler.c-5.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Producto {
+  id        String   @id @default(uuid())
+  codigo    String   @unique
+  nombre    String
+  precio    Float
+  stock     Int
+  categoria String?
+  imagenUrl String?
+  updatedAt DateTime @updatedAt
+}

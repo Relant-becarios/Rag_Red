@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "331114840284",
+    "firebase_url": "https://relantmarketplace-default-rtdb.firebaseio.com",
+    "project_id": "relantmarketplace",
+    "storage_bucket": "relantmarketplace.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:331114840284:android:ff477722d987470fc97419",
+        "android_client_info": {
+          "package_name": "com.relant.marketplace"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBnB0YSk_EF0A5SfxgUEqw95wGUh3Gktv0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
